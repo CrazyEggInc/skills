@@ -1,0 +1,8 @@
+.DS_Store
+.direnv/
+*.log
+*.swp
+*.swo
+.env
+.env.*
+result
