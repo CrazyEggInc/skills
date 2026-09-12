@@ -9,14 +9,29 @@ type RootQueryType {
   Returns the A/B test inbox as a cursor-based list with optional site, status, and search
   filters; visitor sorting is computed from merged results data rather than the base record.
   """
-  abTestList(site: Int, cursor: String, limit: Int, search: String, status: AbTestStatus, order: AbTestListOrder): AbTestsListMeta!
+  abTestList(
+    site: Int
+    cursor: String
+    limit: Int
+    search: String
+    status: AbTestStatus
+    order: AbTestListOrder
+  ): AbTestsListMeta!
+
+  "Returns lightweight A/B test and variant references for selectors."
+  abTestRefList(site: Int!): [AbTestRef!]!
 
   """
   Returns the dashboard-focused A/B test inbox as a cursor-based list with optional site,
   status, and search filters.
   """
   abTestDashboardList(
-    site: Int, cursor: String, limit: Int, search: String, status: AbTestStatus, order: AbTestListOrder
+    site: Int
+    cursor: String
+    limit: Int
+    search: String
+    status: AbTestStatus
+    order: AbTestListOrder
   ): AbTestsListMeta!
 
   """
@@ -29,9 +44,16 @@ type RootQueryType {
   Returns a page-based A/B test list for flows that need numbered pagination, including shared
   goal views; `goal_id` filters the list and the date arguments scope the attached results data.
   """
-  abTestListPaginated(site: Int, limit: Int, goalId: Int, startDate: Int, endDate: Int, page: Int!): AbTestsListPaginatedMeta!
+  abTestListPaginated(
+    site: Int
+    limit: Int
+    goalId: Int
+    startDate: Int
+    endDate: Int
+    page: Int!
+  ): AbTestsListPaginatedMeta!
 
-  "Returns the editor-focused A\/B test payload without loading result metrics."
+  "Returns the editor-focused A/B test payload without loading result metrics."
   abTestEditorDetail(id: Int!): AbTest!
 
   """
@@ -44,7 +66,13 @@ type RootQueryType {
   Returns goal/date/order-scoped result metrics for an A/B test using a normalized per-variant
   counts shape.
   """
-  abTestResultCounts(id: Int!, goalId: Int!, startDate: Int, endDate: Int, order: AbTestVariantOrder): AbTestResultCounts!
+  abTestResultCounts(
+    id: Int!
+    goalId: Int!
+    startDate: Int
+    endDate: Int
+    order: AbTestVariantOrder
+  ): AbTestResultCounts!
 
   """
   Returns conversion distribution buckets for a specific test and goal; the requested dates are
@@ -100,14 +128,48 @@ type RootQueryType {
   """
   userNotifications: UserNotifications
 
-  """
-  Returns the ad-performance dashboard for a site after checking site access plus the
-  `ad_platform_analytics:view` capability; date filters are parsed from either a preset or
-  explicit timestamps.
-  """
-  adPlatformAnalytics(
-    siteId: Int!, startAt: Int, endAt: Int, presetDate: String, platforms: [AdPlatformSource!], limit: Int
-  ): AdPlatformAnalyticsDashboard
+  "Returns a fresh interagent JWT for the current session."
+  interagentJwt: InteragentJwt
+
+  adsLibraryPreviewHeader(siteId: Int!): AdPerformanceHeader
+
+  adsLibraryPreviewAdPreview(siteId: Int!, adId: Int!): AdPerformanceAdPreviewPayload
+
+  adsLibraryPreviewPerformance(
+    siteId: Int!
+    startAt: Int
+    endAt: Int
+    presetDate: String
+    platforms: [AdPlatformSource!]
+    campaignIds: [Int!]
+    adGroupIds: [Int!]
+    adIds: [Int!]
+    goalId: Int
+    dataMode: AdPerformanceDataMode
+    attributionModel: AdPerformanceAttributionModel
+    conversionWindowDays: Int
+  ): AdPerformance
+
+  adPerformanceHeader(siteId: Int!): AdPerformanceHeader
+
+  adPerformanceAdPreview(siteId: Int!, adId: Int!): AdPerformanceAdPreviewPayload
+
+  adPerformance(
+    siteId: Int!
+    startAt: Int
+    endAt: Int
+    presetDate: String
+    platforms: [AdPlatformSource!]
+    campaignIds: [Int!]
+    adGroupIds: [Int!]
+    adIds: [Int!]
+    goalId: Int
+    dataMode: AdPerformanceDataMode
+    attributionModel: AdPerformanceAttributionModel
+    conversionWindowDays: Int
+  ): AdPerformance
+
+  adPerformanceAdTree(siteId: Int!): AdPerformanceAdTreePayload
 
   """
   Returns paginated surveys and CTAs visible to the current session, auto-narrowing the type
@@ -120,6 +182,12 @@ type RootQueryType {
   linked parent resolvers such as audit trail entries.
   """
   addonDetail(id: String!): Addon
+
+  """
+  Returns the current JSON Schema contract and a representative content example for a Survey
+  or CTA. The revision identifies the exact vendored schema set used by mutation validation.
+  """
+  addonContentContract(type: AddonType!): AddonContentContract!
 
   """
   Returns the shared survey and CTA template catalog plus a top-level `can_manage` flag;
@@ -156,7 +224,17 @@ type RootQueryType {
   capability, a date range, and only resolves the nested metric fields you request.
   """
   analytics(
-    sourceId: Int!, sourceType: AnalyticsSource!, searchTerm: String, startAt: Int, endAt: Int, presetDate: String, orderBy: OrderColumn, orderDir: OrderDir, cursor: AnalyticsCursorArg, numSegments: Int, granularity: TimeUnit
+    sourceId: Int!
+    sourceType: AnalyticsSource!
+    searchTerm: String
+    startAt: Int
+    endAt: Int
+    presetDate: String
+    orderBy: OrderColumn
+    orderDir: OrderDir
+    cursor: AnalyticsCursorArg
+    numSegments: Int
+    granularity: TimeUnit
   ): Analytics
 
   """
@@ -165,15 +243,46 @@ type RootQueryType {
   payload.
   """
   analyticsDimension(
-    dimension: AnalyticsDimension!, sourceId: Int!, sourceType: AnalyticsSource!, searchTerm: String, startAt: Int, endAt: Int, presetDate: String, limit: Int, orderBy: OrderColumn, orderDir: OrderDir, cursor: AnalyticsCursorDataArg, numSegments: Int
+    dimension: AnalyticsDimension!
+    sourceId: Int!
+    sourceType: AnalyticsSource!
+    searchTerm: String
+    startAt: Int
+    endAt: Int
+    presetDate: String
+    limit: Int
+    orderBy: OrderColumn
+    orderDir: OrderDir
+    cursor: AnalyticsCursorDataArg
+    numSegments: Int
   ): AnalyticsSingle
+
+  "This is similar to an analytics dimension, but instead returns the over time results."
+  analyticsOverTime(
+    dimension: AnalyticsDimension!
+    metric: AnalyticsMetric!
+    sourceId: Int!
+    sourceType: AnalyticsSource!
+    startAt: Int
+    endAt: Int
+    presetDate: String
+    numSegments: Int
+    granularity: TimeUnit
+    goalId: Int
+  ): Analytics
 
   """
   Returns per-day goal conversions for the requested source and date range. Unlike `analytics`,
   this query only returns the conversion series and does not include dashboard metrics.
   """
   analyticsConversionsOverTime(
-    goalId: Int!, sourceId: Int!, sourceType: AnalyticsSource!, startAt: Int, endAt: Int, presetDate: String
+    goalId: Int!
+    sourceId: Int!
+    sourceType: AnalyticsSource!
+    startAt: Int
+    endAt: Int
+    presetDate: String
+    granularity: TimeUnit
   ): [ConversionDay!]!
 
   """
@@ -196,16 +305,60 @@ type RootQueryType {
   paymentTransactionList(cursor: String, limit: Int, order: PaymentTransactionListOrder): PaymentTransactionListMeta
 
   """
-  Returns the shared country-name dropdown values used by billing forms; this is a static helper
-  list, not account-specific data.
-  """
-  countries: [String!]!
-
-  """
   Returns one payment transaction for the current viewer under the same `billing:nav` permission
   gate; ids are scoped to the authenticated user and missing rows resolve as not found.
   """
   paymentTransaction(id: Int!): PaymentTransaction!
+
+  pricingGrid: PricingGridResult!
+
+  """
+  The pricing experience for the viewer, chosen server-side from their current plan
+  family: `ANALYTICS_GROWTH` returns the Analytics/Growth plan cards + comparison
+  table; `LEGACY` returns empty lists and the shell falls back to `pricingGrid`.
+  """
+  pricingExperience: PricingExperienceResult!
+
+  """
+  Previews the prorated amount due now for an in-app subscription change so the
+  UI can confirm the cost before applying it. `requires_checkout` is true when
+  there is no active Stripe subscription (the change routes to Checkout, which
+  shows the price on Stripe's own page) — in that case the amount fields are null.
+  """
+  previewSubscriptionUpdate(planPriceId: String!): SubscriptionUpdatePreview!
+
+  """
+  The viewer's primary card on file (single-card model). Null when there is no
+  card — the checkout UI then falls back to collecting one. The payment method
+  id is intentionally not exposed.
+  """
+  defaultPaymentMethod: DefaultPaymentMethod
+
+  """
+  Every `pricing_table` plan with its per-tier prices (page-views/recordings
+  volume, price, stripe id) and the matching `$0` companion price ids, so the
+  shell can render the tier picker and build the cart. Optional `ab_test`
+  narrows to an A/B variant ("a"/"b"); omitted returns all pricing_table plans.
+  """
+  tieredPricingPlans(abTest: String): [TieredPricingPlan!]!
+
+  """
+  Up to three all-time usage totals for the viewer's account, in the order the cancellation flow
+  should show them. Totals are account-wide and not filtered by site; display names, captions and
+  number formatting live in the shell.
+  """
+  cancellationMetrics: [CancellationMetric!]!
+
+  brandGuideline(siteId: Int!): BrandGuideline @deprecated(reason: "Use siteAsset with type BRAND_GUIDELINES")
+
+  brandGuidelineRevisions(siteId: Int!, beforeRevision: Int, limit: Int): [BrandGuideline!]!
+    @deprecated(reason: "Use siteAssetRevisions with type BRAND_GUIDELINES")
+
+  siteAssets(siteId: Int!): [SiteAsset!]
+
+  siteAsset(siteId: Int!, type: SiteAssetType!): SiteAsset
+
+  siteAssetRevisions(siteId: Int!, type: SiteAssetType!, beforeRevision: Int, limit: Int): [SiteAsset!]
 
   """
   Returns only the top-level capability fields requested in the selection set, so omitted
@@ -277,7 +430,14 @@ type RootQueryType {
   viewed or upgraded into view.
   """
   errorList(
-    siteId: Int!, fingerprintMd5: String!, order: ErrorsOrder!, limit: Int!, page: Int!, startAt: Int!, endAt: Int!, search: String
+    siteId: Int!
+    fingerprintMd5: String!
+    order: ErrorsOrder!
+    limit: Int!
+    page: Int!
+    startAt: Int!
+    endAt: Int!
+    search: String
   ): ErrorListResults
 
   """
@@ -285,14 +445,27 @@ type RootQueryType {
   the cursor encodes already-seen fingerprint IDs instead of a numeric page offset.
   """
   uniqueErrorList(
-    siteId: Int!, order: UniqueErrorsOrder!, limit: Int!, startAt: Int!, endAt: Int!, status: ErrorStatusEnum!, cursor: String, search: String
+    siteId: Int!
+    order: UniqueErrorsOrder!
+    limit: Int!
+    startAt: Int!
+    endAt: Int!
+    status: ErrorStatusEnum!
+    cursor: String
+    search: String
   ): UniqueErrorListResults
 
   """
   Returns rollup stats for the same filters used by `unique_error_list`, keyed to the current
   status bucket and optional search term rather than to one specific fingerprint.
   """
-  uniqueErrorListStats(siteId: Int!, startAt: Int!, endAt: Int!, status: ErrorStatusEnum!, search: String): UniqueErrorListStatsResults
+  uniqueErrorListStats(
+    siteId: Int!
+    startAt: Int!
+    endAt: Int!
+    status: ErrorStatusEnum!
+    search: String
+  ): UniqueErrorListStatsResults
 
   """
   Returns the note timeline for one fingerprint. The resolver appends a synthetic first entry
@@ -411,8 +584,27 @@ type RootQueryType {
   converted to the viewer's default currency.
   """
   goalPageConversions(
-    id: Int, siteId: Int, startDate: Int, endDate: Int, search: String, page: Int, perPage: Int, order: GoalPageConversionsOrder
+    id: Int
+    siteId: Int
+    startDate: Int
+    endDate: Int
+    search: String
+    page: Int
+    perPage: Int
+    order: GoalPageConversionsOrder
   ): GoalPageList
+
+  "Returns conversion metrics grouped by one selected goal-conversion dimension."
+  goalConversionBreakdown(
+    id: Int
+    siteId: Int
+    startDate: Int
+    endDate: Int
+    dimension: GoalConversionDimension!
+    page: Int
+    perPage: Int
+    order: GoalConversionBreakdownOrder
+  ): GoalConversionBreakdownList
 
   """
   Returns images visible to the current session, optionally site-scoped. Pagination uses an
@@ -428,11 +620,18 @@ type RootQueryType {
 
   """
   Returns notification rules the current session can view with `notifications:nav`, limited to
-  supported resources (`goal` and `survey`) and filterable by site, channel type, search text,
-  or resource id.
+  supported resources (`goal`, `survey`, and site error notifications) and filterable by site,
+  channel type, search text, or resource.
   """
   notificationsList(
-    cursor: String, limit: Int, siteId: Int, resourceId: String, order: NotificationsListOrder, search: String, type: ChannelType
+    cursor: String
+    limit: Int
+    siteId: Int
+    resource: NotificationResource
+    resourceId: String
+    order: NotificationsListOrder
+    search: String
+    type: ChannelType
   ): NotificationsListMeta
 
   """
@@ -471,7 +670,7 @@ type RootQueryType {
   Checks page-editor script installation for one page/device pair, first trusting an installed
   site record and otherwise falling back to a live script check.
   """
-  pageEditorCheckScript(pageId: Int!, device: SnapshotDevice!): PageEditorScriptCheckResponse
+  pageEditorCheckScript(pageId: String!, device: SnapshotDevice!): PageEditorScriptCheckResponse
 
   """
   Returns the most relevant editor for the current user, preferring editors with published
@@ -480,7 +679,7 @@ type RootQueryType {
   pageEditorLatest: String
 
   """
-  Loads a page editor by hashed editor ID, updates its last-opened timestamp, and may bind an
+  Loads a page editor by editor UUID, updates its last-opened timestamp, and may bind an
   unowned editor to the current user session.
   """
   pageEditorGetEditor(editorId: String!): PageEditorResponse
@@ -497,6 +696,20 @@ type RootQueryType {
   """
   pageEditorGetBrandGuidelines(editorId: String!, site: String!): String
 
+  pageSpeedPage(id: Int!): PageSpeedPage
+
+  """
+  Returns the list of active pages registered for scheduled
+  Page Speed runs.
+  """
+  pageSpeedPages(siteId: Int!): [PageSpeedPage!]!
+
+  pageSpeedRuns(pageSpeedPageId: Int!): [PageSpeedRun!]!
+
+  pageSpeedRunAnalysis(pageSpeedRunId: Int!): PageSpeedRunAnalysis!
+
+  pageSpeedRunAudits(pageSpeedRunId: Int!): PageSpeedRunAudits!
+
   """
   Returns recommended playlists together with the site's saved playlists; saved filters may be
   migrated to the requested version before the combined result is alphabetized.
@@ -510,10 +723,28 @@ type RootQueryType {
   playlistsMostRecent(site: Int!, limit: Int): [PlaylistUsage!]!
 
   """
+  Returns the shared country dropdown values used by product forms; this is a static helper
+  list with country names and codes, not account-specific data.
+  """
+  countries: [CountryOption!]!
+
+  "Returns the supported currency-code allow-list used by universal segment money conditions."
+  supportedCurrencyCodes: [CurrencyOption!]!
+
+  "Returns the supported language-code list used by the shell and audience filters."
+  languages: [LanguageOption!]!
+
+  """
   Returns a cursor-paged recordings feed for one site, applying the serialized filters payload
   and per-recording permission state.
   """
-  recordingsList(site: Int!, filters: String!, cursor: String, limit: Int, order: RecordingsListOrder!): RecordingsListMeta
+  recordingsList(
+    site: Int!
+    filters: String!
+    cursor: String
+    limit: Int
+    order: RecordingsListOrder!
+  ): RecordingsListMeta
 
   """
   Returns page-based recording groups keyed by normalized first or last page, with
@@ -521,7 +752,12 @@ type RootQueryType {
   pagination.
   """
   recordingsGroups(
-    site: Int!, groupBy: RecordingGroupBy!, filters: String!, cursor: String, limit: Int, includeFirst: String
+    site: Int!
+    groupBy: RecordingGroupBy!
+    filters: String!
+    cursor: String
+    limit: Int
+    includeFirst: String
   ): RecordingsGroupsMeta
 
   """
@@ -535,7 +771,13 @@ type RootQueryType {
   `recordings_list`, pagination is page-based rather than cursor-based.
   """
   recordingsInGroup(
-    site: Int!, groupBy: RecordingGroupBy!, group: String!, filters: String!, page: Int, limit: Int, order: RecordingsListOrder!
+    site: Int!
+    groupBy: RecordingGroupBy!
+    group: String!
+    filters: String!
+    page: Int
+    limit: Int
+    order: RecordingsListOrder!
   ): RecordingsInGroupMeta
 
   """
@@ -637,17 +879,17 @@ type RootQueryType {
   sharedUrl(type: SharedUrlType!, itemId: ID!, siteId: Int, originalUrl: String): SharedUrlResult
 
   """
-  Legacy alias for `shared_url` kept for frontend compatibility; it resolves through the same
-  edit-gated create-or-reuse flow.
-  """
-  sharedUrlStr(type: SharedUrlType!, itemId: ID!, siteId: Int, originalUrl: String): SharedUrlResult
-
-  """
   Returns the current user's shared links as a paginated list plus pagination metadata. This
   query is owner-edit gated and supports server-side status filtering, fuzzy search, and
   sortable columns.
   """
-  sharedUrls(searchTerm: String, order: SharedUrlsOrder!, limit: Int!, page: Int!, status: SharedUrlsStatus!): SharedUrlListResults
+  sharedUrls(
+    searchTerm: String
+    order: SharedUrlsOrder!
+    limit: Int!
+    page: Int!
+    status: SharedUrlsStatus!
+  ): SharedUrlListResults
 
   """
   Returns every site visible to the current session, including shared-link access, with derived
@@ -695,7 +937,12 @@ type RootQueryType {
   Cursor-based snapshot listing for infinite-scroll UIs; omitting `limit` uses the server
   default, and `next_page_cursor` is derived from the IDs returned in the current page.
   """
-  snapshotsList(filter: SnapshotListFilterCursor!, order: SnapshotListOrder!, cursor: String, limit: Int): SnapshotsListMeta
+  snapshotsList(
+    filter: SnapshotListFilterCursor!
+    order: SnapshotListOrder!
+    cursor: String
+    limit: Int
+  ): SnapshotsListMeta
 
   """
   Page-based snapshot listing that returns both the transformed snapshot rows and aggregate
@@ -714,6 +961,12 @@ type RootQueryType {
   fields added by the transformer layer.
   """
   snapshot(id: Int!): Snapshot
+
+  "Returns status, visit, and click totals for one snapshot, querying ClickHouse only after its site is installed."
+  snapshotStats(id: Int!): SnapshotStats
+
+  "Returns missing phone and tablet Heatmap devices for the same normalized page as one snapshot."
+  snapshotMissingDevices(id: Int!): [SnapshotDevice!]
 
   """
   Returns how many additional snapshots would exceed the viewer's quota for a proposed create
@@ -738,7 +991,12 @@ type RootQueryType {
   after optional date filtering, not per individual answer row.
   """
   surveyResponseList(
-    surveyId: ID!, cursor: String, limit: Int, startDate: Int, endDate: Int, order: SurveyResponsesListOrder!
+    surveyId: ID!
+    cursor: String
+    limit: Int
+    startDate: Int
+    endDate: Int
+    order: SurveyResponsesListOrder!
   ): SurveyResponseListMeta
 
   """
@@ -770,14 +1028,19 @@ type RootQueryType {
   always include an `All` row and require the `traffic_analysis:view` capability.
   """
   trafficAnalysisUrls(
-    siteId: Int!, startAt: Int!, endAt: Int!, limit: Int, order: TrafficAnalysisUrlsOrder, filters: [TrafficAnalysisUrlsQuery!]
+    siteId: Int!
+    startAt: Int!
+    endAt: Int!
+    limit: Int
+    order: TrafficAnalysisUrlsOrder
+    filters: [TrafficAnalysisUrlsQuery!]
   ): [TrafficAnalysisUrlsResult!]!
 
-  """
-  Returns the logged-in user's universal segments in creation order with cursor pagination
-  derived from the IDs in the current page.
-  """
-  universalSegmentList(cursor: String, limit: Int): UniversalSegmentListMeta
+  "Returns the pinned Audience definition contract and account targeting availability."
+  audienceDefinitionContract: AudienceDefinitionContract!
+
+  "Returns registered user properties for the current account and selected site."
+  userProperties(siteId: Int!): [UserProperty!]!
 
   """
   Returns a logged-in user's URL technology recommendation result. The resolver is currently
@@ -806,7 +1069,16 @@ type RootMutationType {
   omitted flags keep their existing values.
   """
   setUserNotifications(
-    endOfTest: Boolean, dailyUpdate: Boolean, weeklyUpdate: Boolean, accountLimits: Boolean, receipt: Boolean, newsletter: Boolean, snapshotRecommendation: Boolean, weeklyExport: Boolean, monthlyExport: Boolean, trialEnded: Boolean
+    endOfTest: Boolean
+    dailyUpdate: Boolean
+    weeklyUpdate: Boolean
+    accountLimits: Boolean
+    receipt: Boolean
+    newsletter: Boolean
+    snapshotRecommendation: Boolean
+    weeklyExport: Boolean
+    monthlyExport: Boolean
+    trialEnded: Boolean
   ): Boolean
 
   """
@@ -820,16 +1092,14 @@ type RootMutationType {
   address validation and also updates matching payment transaction company details.
   """
   updateCompanyInfo(
-    companyName: String, companyId: String, companyVat: String, address: String, city: String, stateOrProvince: String, zipOrPostalCode: String, country: String
-  ): Boolean
-
-  """
-  Requires billing edit access. Creates a new tokenized CyberSource card when none exists,
-  otherwise updates the stored card, reauthorizes it, and unlocks subscriptions after a
-  successful save.
-  """
-  createOrUpdateCreditCard(
-    firstName: String!, lastName: String!, cardNumber: String!, cardExpirationYear: String!, cardExpirationMonth: String!, cardSecurityCode: String!, address: String!, city: String!, stateOrProvince: String, zipOrPostalCode: String, country: String!
+    companyName: String
+    companyId: String
+    companyVat: String
+    address: String
+    city: String
+    stateOrProvince: String
+    zipOrPostalCode: String
+    country: String
   ): Boolean
 
   """
@@ -879,7 +1149,7 @@ type RootMutationType {
 
   """
   Replaces the logged-in user's enabled Google Analytics property set with the provided property
-  IDs. Requires `site_settings: edit`, enforces the GA property limit against the unique IDs
+  IDs. Requires `ga: import`, enforces the GA property limit against the unique IDs
   submitted, queues GA import jobs for the submitted properties, and returns only properties
   whose enabled state changed.
   """
@@ -945,7 +1215,14 @@ type RootMutationType {
   tracking.
   """
   setRecordingSettings(
-    siteId: Int, pageTargetingEnabled: Boolean, endSessionOnBlockedUrl: Boolean, urlMatchingRules: String, blockedUrlMatchingRules: String, maskElements: String, samplingType: SamplingType, samplingValue: Float
+    siteId: Int
+    pageTargetingEnabled: Boolean
+    endSessionOnBlockedUrl: Boolean
+    urlMatchingRules: String
+    blockedUrlMatchingRules: String
+    maskElements: String
+    samplingType: SamplingType
+    samplingValue: Float
   ): RecordingSettings!
 
   "Stores up to the first 100 colors in the site's metadata and ignores any additional values."
@@ -958,7 +1235,13 @@ type RootMutationType {
   the site does not have one yet.
   """
   updateSiteSettings(
-    siteId: Int!, dnt: Boolean, autoIdentify: Boolean, useSecureCookies: Boolean, explicitAgent: Boolean, ipListText: String, defaultCurrency: String
+    siteId: Int!
+    dnt: Boolean
+    autoIdentify: Boolean
+    useSecureCookies: Boolean
+    explicitAgent: Boolean
+    ipListText: String
+    defaultCurrency: String
   ): Site
 
   """
@@ -1051,8 +1334,15 @@ type RootMutationType {
   the tracking script after success.
   """
   updateUserSettings(
-    siteId: Int, dnt: Boolean, autoIdentity: Boolean, defaultCurrency: String, explicitAgent: Boolean, useSecureCookies: Boolean
+    siteId: Int
+    dnt: Boolean
+    autoIdentity: Boolean
+    defaultCurrency: String
+    explicitAgent: Boolean
+    useSecureCookies: Boolean
   ): MeDetails
+
+  upsertUserOnboarding(startedAt: Int, completedAt: Int, flow: String, siteUrl: String, siteTech: String): MeDetails
 
   """
   Regenerates both API credentials for the logged-in user and returns the new key, secret, and
@@ -1139,7 +1429,12 @@ type RootMutationType {
   existing users may be linked immediately instead of creating a pending invitation, and
   invitation delivery behavior depends on the account's SSO configuration.
   """
-  createAccountUsers(emails: [String!]!, role: AccountUsersRole!, sites: [String!]!, specificSites: Boolean!): [AccountTeamMember!]!
+  createAccountUsers(
+    emails: [String!]!
+    role: AccountUsersRole!
+    sites: [String!]!
+    specificSites: Boolean!
+  ): [AccountTeamMember!]!
 
   """
   Deletes linked team members or pending invitations for the logged-in account. Requires team
@@ -1153,7 +1448,12 @@ type RootMutationType {
   provided fields are changed; owners are always treated as account-wide, and permission checks
   reject ids the caller is not allowed to modify.
   """
-  updateAccountUsers(ids: [String!]!, role: AccountUsersRole, sites: [String], specificSites: Boolean): [AccountTeamMember!]!
+  updateAccountUsers(
+    ids: [String!]!
+    role: AccountUsersRole
+    sites: [String]
+    specificSites: Boolean
+  ): [AccountTeamMember!]!
 
   """
   Resends an invitation email for a pending invite in the logged-in account. Requires team
@@ -1181,7 +1481,13 @@ type RootMutationType {
   otherwise it saves the record and returns `needsValidation: false`.
   """
   saveSsoSettings(
-    enabled: Boolean!, required: Boolean!, spConfiguration: SsoSpConfigurationInput!, idpConfiguration: SsoIdpConfigurationInput!, emailDomain: String, organizationName: String, provisioningRules: [SsoProvisioningRuleInput!]
+    enabled: Boolean!
+    required: Boolean!
+    spConfiguration: SsoSpConfigurationInput!
+    idpConfiguration: SsoIdpConfigurationInput!
+    emailDomain: String
+    organizationName: String
+    provisioningRules: [SsoProvisioningRuleInput!]
   ): SaveSsoSettingsResult!
 
   """
@@ -1302,6 +1608,12 @@ type RootMutationType {
   """
   abTestDuplicate(id: Int!): AbTestMutationResult!
 
+  initializeMetaAdsConnection(siteId: Int!, returnUrl: String!): InitializeMetaAdsConnectionResult
+
+  initializeRedditAdsConnection(siteId: Int!, returnUrl: String!): InitializeMetaAdsConnectionResult
+
+  deleteAdPlatformConnection(siteId: Int!, connectionId: Int!): DeleteAdPlatformConnectionResult
+
   """
   Creates a goal for a site the caller can edit. Trigger filters are validated before any
   records are written, the user's script is flagged for regeneration, a screenshot batch job is
@@ -1365,6 +1677,12 @@ type RootMutationType {
   """
   addonEdit(addon: AddonEditParams!): AddonMutationResponse!
 
+  "Publishes the saved add-on draft and its Audience atomically."
+  addonDraftPublish(id: String!, siteId: Int!): AddonMutationResponse!
+
+  "Discards the saved add-on draft and its draft Audience atomically."
+  addonDraftDiscard(id: String!, siteId: Int!): AddonMutationResponse!
+
   """
   Creates a reusable survey or CTA template. This is restricted to callers with addon template
   management access, and an uploaded thumbnail is stored before the template is saved.
@@ -1390,20 +1708,64 @@ type RootMutationType {
   """
   createStripeCustomerSession: StripeCustomerSessionResult
 
+  createCustomCheckoutSession(planPriceId: String!, promotekitReferral: String): CustomCheckoutSessionResult
+
+  updateSubscriptionItems(
+    planPriceId: String!
+
+    "Stripe proration timestamp from a prior preview, so the charge matches what was shown."
+    prorationDate: Int
+  ): UpdateSubscriptionResult
+
+  """
+  Creates a Stripe subscription for a logged-in user (the in-app replacement for
+  hosted Checkout). `paymentMethodId` is the freshly-entered card, or omitted to
+  reuse the customer's existing default card. `clientSecret` is non-nil only when
+  the first invoice's PaymentIntent needs authentication (SCA) — the client
+  confirms it before navigating to success.
+  """
+  createSubscription(
+    planPriceId: String!
+    paymentMethodId: String
+    promotekitReferral: String
+  ): CreateSubscriptionResult
+
+  """
+  Replaces the viewer's primary card with `payment_method_id` and returns the
+  refreshed card summary.
+  """
+  setDefaultPaymentMethod(paymentMethodId: String!): SetDefaultPaymentMethodResult
+
+  """
+  Switches the viewer's subscription to the Free/Free+ plan from the in-app cancellation
+  flow ("Switch to Free"). Paid plans keep access until the end of the current billing
+  period; trials switch immediately.
+  """
+  switchToFree: CancelSubscriptionResult
+
+  """
+  Cancels the viewer's subscription from the in-app cancellation flow ("Cancel Subscription
+  Permanently"). Moves the account to Free/Free+ and marks it Canceled without deleting the
+  account. Paid plans keep access until the end of the current billing period; trials cancel
+  immediately.
+  """
+  cancelSubscription: CancelSubscriptionResult
+
+  brandGuidelineRevisionCreate(siteId: Int!, content: String!, expectedRevision: Int!): BrandGuideline!
+    @deprecated(reason: "Use siteAssetRevisionCreate with type BRAND_GUIDELINES")
+
+  siteAssetRevisionCreate(siteId: Int!, type: SiteAssetType!, content: String!, expectedRevision: Int!): SiteAsset
+
+  siteAssetLogoUpload(siteId: Int!, image: Upload!, expectedRevision: Int!): SiteAsset
+
+  siteAssetLogoRemove(siteId: Int!, expectedRevision: Int!): SiteAsset
+
   """
   Soft-deletes one or more survey response groups for a survey. Requires logged-in survey edit
   access, is idempotent for already deleted responses, returns the deleted response group IDs on
   success, and returns a generic error when nothing matched.
   """
   surveyResponseDelete(surveyId: ID!, responseGroupIds: [ID!]): [ID!]
-
-  """
-  Grants an opt-in feature flag to the current user. Requires `owner_edit`, only accepts the
-  allowlisted opt-in flags, and returns an error when the flag was already granted. The payload
-  is `me_details`, so the nested `features` field is resolved from the current user session
-  rather than the insert result.
-  """
-  featureFlagOptIn(feature: OptableFeatureFlag!): MeDetails
 
   """
   Marks a page camera snapshot as ready for screenshot processing after the user upload step.
@@ -1416,56 +1778,78 @@ type RootMutationType {
   Grants a user access to edit or publish a page editor page/version. Requires owner-level edit
   access, creates the target site/account access when missing, and sends the access email.
   """
-  pageEditorGiveAccess(versionId: Int, pageId: Int, userId: Int!, isElectron: Boolean, redirect: String): PageEditorListPermissionsMeta!
+  pageEditorGiveAccess(
+    versionId: String
+    pageId: String
+    userId: Int!
+    isElectron: Boolean
+    redirect: String
+  ): PageEditorListPermissionsMeta!
 
   """
   Publishes a version if the caller can edit page settings for the page's site. This also
   unpublishes overlapping published versions for the same page and refreshes the install script
   before returning the page's current versions.
   """
-  publishVersion(versionId: Int!): [PageVersionResponse!]
+  publishVersion(versionId: String!): [PageVersionResponse!]
 
   """
   Unpublishes a version, updates the page script when publish state changes, and returns the
   page's current versions rather than a single version record.
   """
-  unpublishVersion(versionId: Int!): [PageVersionResponse!]
+  unpublishVersion(versionId: String!): [PageVersionResponse!]
 
-  pageEditorDeleteVersion(versionId: Int!): Boolean
+  pageEditorDeleteVersion(versionId: String!): Boolean
 
   """
   Checks whether the current user can publish changes for a page or version. If the editor is
   still unclaimed it is assigned to the current user; otherwise the owner-notification email is
   sent when access is missing.
   """
-  pageEditorCheckPermissions(versionId: Int, pageId: Int, isElectron: Boolean, redirect: String): PageEditorCheckPermissionsResponse!
+  pageEditorCheckPermissions(
+    versionId: String
+    pageId: String
+    isElectron: Boolean
+    redirect: String
+  ): PageEditorCheckPermissionsResponse!
 
   """
   Validates whether a specific user can access a page or version using a signed token context.
   It mirrors the permission check flow and sends a validation email only when access is allowed
   but the user is not logged in.
   """
-  pageEditorValidateUser(versionId: Int, pageId: Int, userId: Int!, isElectron: Boolean, redirect: String): PageEditorValidateUserResponse!
+  pageEditorValidateUser(
+    versionId: String
+    pageId: String
+    userId: Int!
+    isElectron: Boolean
+    redirect: String
+  ): PageEditorValidateUserResponse!
 
-  pageEditorImageUploadUrls(images: [String!], pageId: Int!): [Image!]
+  pageEditorImageUploadUrls(images: [String!], pageId: String!): [Image!]
 
-  pageEditorUpdateHistory(pageId: Int!, history: String!): Boolean
+  pageEditorUpdateHistory(pageId: String!, history: String!): Boolean
 
   """
   Creates a new version snapshot for a page and returns the new version id plus presigned
   thumbnail upload details; the response does not include the stored patch body.
   """
-  pageEditorCreateVersion(pageId: Int!, patch: String!, segment: String, name: String): PageEditorUpdateVersionResponse!
+  pageEditorCreateVersion(
+    pageId: String!
+    patch: String!
+    segment: String
+    name: String
+  ): PageEditorUpdateVersionResponse!
 
   """
   Overwrites an existing version's patch, segment, and optional name, then returns thumbnail
   URLs for the existing version instead of the updated version payload.
   """
-  pageEditorUpdateVersion(id: Int!, patch: String!, segment: String, name: String): PageEditorUpdateVersionResponse!
+  pageEditorUpdateVersion(id: String!, patch: String!, segment: String, name: String): PageEditorUpdateVersionResponse!
 
   """
-  Creates a page under an existing hashed editor id or creates a new editor when editor_id is
-  omitted. Returns the hashed editor id together with page thumbnail upload details.
+  Creates a page under an existing editor UUID or creates a new editor when editor_id is
+  omitted. Returns the editor UUID together with page thumbnail upload details.
   """
   pageEditorCreatePage(editorId: String, url: String!): PageEditorCreatePageResponse!
 
@@ -1475,13 +1859,21 @@ type RootMutationType {
   """
   pageEditorSaveBrandGuidelines(editorId: String!, site: String!, settings: String!): Boolean
 
-  pageEditorIgnoreCheck(pageId: Int!, element: String!, checkId: String!): Boolean
+  pageEditorIgnoreCheck(pageId: String!, element: String!, checkId: String!): Boolean
 
-  pageEditorRemoveIgnoreCheck(pageId: Int!, element: String!, checkId: String!): Boolean
+  pageEditorRemoveIgnoreCheck(pageId: String!, element: String!, checkId: String!): Boolean
 
-  pageEditorLockElement(pageId: Int!, element: String!): Boolean
+  pageEditorLockElement(pageId: String!, element: String!): Boolean
 
-  pageEditorUnlockElement(pageId: Int!, element: String!): Boolean
+  pageEditorUnlockElement(pageId: String!, element: String!): Boolean
+
+  pageSpeedPageCreate(siteId: Int!, url: String!): PageSpeedPageMutationPayload!
+
+  pageSpeedPageRefresh(pageSpeedPageId: Int!): PageSpeedPageMutationPayload!
+
+  pageSpeedRunRetry(pageSpeedRunId: Int!): PageSpeedRunMutationPayload!
+
+  pageSpeedPageDelete(pageSpeedPageId: Int!): Affected
 
   """
   Uploads one image for the logged-in user, normalizes most raster formats to fit within
@@ -1504,21 +1896,18 @@ type RootMutationType {
   imageDelete(id: ID!, siteId: Int): String!
 
   """
-  Creates a universal segment for a site the caller can edit. The submitted `definition` must
-  survive downstream segment validation, ownership is derived from the logged-in user rather
-  than client input, and any validation or site-access failure is returned as the generic
-  GraphQL error `Invalid params`.
-  """
-  universalSegmentCreate(universalSegment: UniversalSegmentCreateParams!): UniversalSegmentResponse!
-
-  """
-  Creates a notification for a goal or survey after confirming the caller has
+  Creates a notification for a goal, survey, or site after confirming the caller has
   `notifications:edit` access to the resource's site. This may create or reuse the backing
   channel, and duplicate channel/resource/action combinations fail through the notification
   changeset.
   """
   notificationCreate(
-    resource: NotificationResource!, resourceId: String!, action: NotificationAction!, channelType: ChannelInputType!, channelId: Int, channelDestination: String
+    resource: NotificationResource!
+    resourceId: String!
+    action: NotificationAction!
+    channelType: ChannelInputType!
+    channelId: Int
+    channelDestination: String
   ): Notification!
 
   """
@@ -1645,26 +2034,31 @@ enum TechRecommendationIssue {
   NOT_ENOUGH_INFO_YET
 }
 
-"""
-Cursor-paginated segment list where `next_page_cursor` is computed from the returned IDs and
-`has_next_page` is inferred from whether the page filled the requested limit.
-"""
-type UniversalSegmentListMeta {
-  list: [UniversalSegmentResponse!]!
-  nextPageCursor: String!
-  hasNextPage: Boolean!
+type UserProperty {
+  name: String!
+  propertyType: String!
 }
 
-"""
-Universal segment payload returned by GraphQL; the segment definition is exposed as a
-JSON-encoded string and timestamps are Unix seconds.
-"""
-type UniversalSegmentResponse {
-  id: ID!
-  siteIds: [Int!]!
-  name: String
-  definition: String
-  createdAt: Int
+type AudienceDefinitionContract {
+  version: Int!
+  contractRevision: Int!
+  artifactDigest: String!
+  rootOperator: String!
+  exclusionOperator: String!
+  nestedConditions: Boolean!
+  criteria: [AudienceCriterionContract!]!
+  allowedCriteria: [String!]!
+  example: String!
+}
+
+type AudienceCriterionContract {
+  name: String!
+  positiveComparisons: [String!]!
+  negativeComparisons: [String!]!
+  allowsExclusion: Boolean!
+  valueTypes: [String!]!
+  fixedValues: [String!]!
+  discoveryQuery: String
 }
 
 """
@@ -1730,6 +2124,8 @@ type AccountTeamMember {
   invitationPending: Boolean!
   specificSites: Boolean!
   secondFactorEnabled: Boolean!
+  canDelete: Boolean!
+  canUpdate: Boolean!
 }
 
 """
@@ -2122,6 +2518,13 @@ for the same filter set.
 type SnapshotPaginatedList {
   meta: PaginationMeta
   list: [Snapshot]
+}
+
+type SnapshotStats {
+  id: Int!
+  totalVisits: Int!
+  totalClicks: Int!
+  snapshotStatus: SnapshotStatus!
 }
 
 """
@@ -2816,6 +3219,229 @@ enum RecordingsListSortField {
   FINAL_VALUE
 }
 
+type CountryOption {
+  name: String!
+  code: String!
+}
+
+type CurrencyOption {
+  code: String!
+  name: String!
+}
+
+type LanguageOption {
+  code: String!
+  name: String!
+}
+
+type PageSpeedPage {
+  "A page speed page, which maps to the equivalent web page."
+  id: Int
+
+  userId: Int
+
+  siteId: Int
+
+  sourceUrl: String
+
+  fingerprint: String
+
+  title: String
+
+  screenshotUrl: String
+
+  mobileScreenshotUrl: String
+
+  enabled: Boolean
+
+  nextRunAt: Int
+
+  lastScheduledAt: Int
+
+  lastRunAt: Int
+
+  isRefreshing: Boolean!
+
+  createdAt: Int
+
+  latestRuns: [PageSpeedRun!]!
+
+  createdByUserId: Int
+
+  deletedAt: Int
+
+  permissions: PageSpeedPagePermissions!
+}
+
+type PageSpeedPagePermissions {
+  canEdit: Boolean!
+}
+
+type PageSpeedRun {
+  id: Int
+  pageId: Int
+  device: PageSpeedDevice
+  trigger: String
+  scheduledAt: Int
+  startedAt: Int
+  completedAt: Int
+  rawDataUrl: String
+  lighthouseVersion: String
+  performanceScore: Float
+  accessibilityScore: Float
+  bestPracticesScore: Float
+  seoScore: Float
+  agenticBrowsingScore: String
+  coreMetrics: JSON
+  auditCounts: JSON
+  error: String
+}
+
+type PageSpeedRunAnalysis {
+  runId: Int!
+  device: PageSpeedDevice!
+  lighthouseVersion: String
+  metrics: [PageSpeedMetric!]!
+  categories: [PageSpeedCategory!]!
+}
+
+type PageSpeedRunAudits {
+  runId: Int!
+  device: PageSpeedDevice!
+  lighthouseVersion: String
+  categories: [PageSpeedAuditCategory!]!
+}
+
+type PageSpeedAuditCategory {
+  id: PageSpeedCategoryId!
+  title: String!
+  score: Float
+  audits: [PageSpeedAudit!]!
+}
+
+type PageSpeedAudit {
+  id: String!
+  title: String!
+  descriptionMarkdown: String
+  status: PageSpeedAuditStatus!
+  score: Float
+  scoreDisplayMode: String
+  summaryText: String!
+  warnings: [String!]!
+  resources: [PageSpeedResource!]!
+  elements: [PageSpeedElement!]!
+  findings: [PageSpeedAuditFinding!]!
+}
+
+type PageSpeedAuditFinding {
+  cells: [PageSpeedAuditFindingCell!]!
+}
+
+type PageSpeedAuditFindingCell {
+  key: String!
+  label: String!
+  value: String!
+}
+
+type PageSpeedMetric {
+  id: String!
+  acronym: String!
+  title: String!
+  descriptionMarkdown: String
+  value: Float
+  unit: PageSpeedMetricUnit
+  displayValue: String
+  score: Float
+  rating: PageSpeedRating!
+  weight: Int!
+  recommendationIds: [String!]!
+}
+
+type PageSpeedCategory {
+  id: PageSpeedCategoryId!
+  title: String!
+  descriptionMarkdown: String
+  score: Float
+  passedCount: Int!
+  failedCount: Int!
+  manualCount: Int!
+  recommendations: [PageSpeedRecommendation!]!
+}
+
+type PageSpeedRecommendation {
+  id: String!
+  category: PageSpeedCategoryId!
+  groupId: String
+  groupTitle: String
+  title: String!
+  descriptionMarkdown: String
+  guidanceMarkdown: String
+  score: Float
+  rating: PageSpeedRating
+  scoreDisplayMode: String
+  displayValue: String
+  impact: PageSpeedImpact
+  savings: PageSpeedSavings
+  affectedItemCount: Int!
+  relevantMetricIds: [String!]!
+  resources: [PageSpeedResource!]!
+  elements: [PageSpeedElement!]!
+}
+
+type PageSpeedSavings {
+  milliseconds: Float
+  bytes: Float
+}
+
+type PageSpeedResource {
+  url: String!
+  totalBytes: Float
+  wastedBytes: Float
+  wastedMilliseconds: Float
+}
+
+type PageSpeedElement {
+  selector: String
+  label: String
+  snippet: String
+  explanation: String
+}
+
+enum PageSpeedCategoryId {
+  PERFORMANCE
+  ACCESSIBILITY
+  BEST_PRACTICES
+  SEO
+  AGENTIC_BROWSING
+}
+
+enum PageSpeedRating {
+  GOOD
+  NEEDS_IMPROVEMENT
+  POOR
+  UNRATED
+}
+
+enum PageSpeedMetricUnit {
+  MILLISECONDS
+  BYTES
+  UNITLESS
+}
+
+enum PageSpeedImpact {
+  CRITICAL
+  SERIOUS
+  MODERATE
+  MINOR
+}
+
+enum PageSpeedAuditStatus {
+  PASSED
+  WARNING
+  FAILED
+  ERROR
+}
+
 """
 Permission snapshot used by page-editor sharing and publishing flows; `account_exists`
 short-circuits the other fields when no account relationship exists.
@@ -2834,12 +3460,13 @@ type PageEditorScriptCheckResponse {
 }
 
 """
-Page editor loaded from a hashed editor ID, with nested pages and versions eagerly materialized
+Page editor loaded from an editor UUID, with nested pages and versions eagerly materialized
 for the editor session.
 """
 type PageEditorResponse {
   id: String!
   userId: Int
+  token: String!
   pages: [PageEditorPageResponse!]!
 }
 
@@ -2848,7 +3475,7 @@ One tracked page inside an editor; history is persisted raw and page-level lock 
 is exposed as JSON-encoded strings.
 """
 type PageEditorPageResponse {
-  id: Int!
+  id: String!
   url: String!
   history: String
   thumbnailUrl: String
@@ -2964,6 +3591,7 @@ type GoalLinked {
   id: Int!
   siteId: Int!
   name: String
+  autoName: String
   hasValue: Boolean
   createdAt: Int
   deletedAt: Int
@@ -2974,14 +3602,15 @@ type GoalCardGoal {
   id: Int!
   siteId: Int!
   name: String
+  autoName: String
   triggers: [GoalTriggers!]
   abTestsCount: Int
   abTestsCountActive: Int
 }
 
 """
-Summary row returned by `goal_list_summary`; recent conversion and session counts come from the
-resolver's dashboard-specific 7-day window, including today, not from all-time goal totals.
+Summary row returned by `goal_list_summary`; recent conversions come from the resolver's
+dashboard-specific 7-day window, including today, not from all-time goal totals.
 """
 type GoalSummary {
   id: Int!
@@ -3004,7 +3633,7 @@ type GoalSummary {
 
   recentConversionsCount: Int
 
-  sessionsCount: Int
+  sessionsCount: Int @deprecated(reason: "The Goals dashboard no longer displays recordings counts")
 
   deletedAt: Int
 
@@ -3080,6 +3709,7 @@ type GoalTriggers {
   type: TriggerType!
   name: String
   autoName: String
+  codeName: String
   filter: String!
   createdAt: Int!
   deletedAt: Int
@@ -3127,6 +3757,31 @@ enum GoalPageConversionsSortField {
   TOTAL_CONVERSIONS
   TOTAL_VISITORS
   TOTAL_VALUE
+}
+
+input GoalConversionBreakdownOrder {
+  sort: SortOrder
+  field: GoalConversionBreakdownSortField
+}
+
+enum GoalConversionBreakdownSortField {
+  DIMENSION_VALUE
+  TOTAL_CONVERSIONS
+  TOTAL_VISITORS
+  TOTAL_VALUE
+}
+
+enum GoalConversionDimension {
+  REFERRER
+  COUNTRY
+  LANDING_PAGE
+  DEVICE
+  NEW_VS_RETURNING
+  UTM_SOURCE
+  UTM_MEDIUM
+  UTM_CAMPAIGN
+  UTM_TERM
+  UTM_CONTENT
 }
 
 """
@@ -3188,6 +3843,18 @@ type GoalPagePaginationMeta {
   perPage: Int
   total: Int
   totalPages: Int
+}
+
+type GoalConversionBreakdownList {
+  list: [GoalConversionBreakdown]
+  meta: GoalPagePaginationMeta
+}
+
+type GoalConversionBreakdown {
+  dimensionValue: String
+  totalConversions: Int
+  totalVisitors: Int
+  totalValue: GoalValue
 }
 
 type GoalFixedValue {
@@ -3766,6 +4433,7 @@ enum ChangelogCategory {
   INSTALLATION
   LIVE_ACTIVITY
   OPTIONS
+  PAGE_SPEED
   RECORDINGS
   SNAPSHOTS
   SURVEYS
@@ -3811,9 +4479,15 @@ status adjusted for trial credit-card failures and temporary plans.
 """
 type CapabilitySubscription {
   active: Boolean!
+
   state: SubscriptionState!
+
   endDate: Int
+
   plan: SubscriptionPlanDetails
+
+  "The interval the account is committed to going forward (for a trial, the plan it converts to)."
+  billingPeriod: SubscriptionPlanPeriod
 }
 
 """
@@ -3880,11 +4554,13 @@ derived from the current session, feature flags, and subscription state.
 """
 type Capabilities {
   abTesting: CapabilityWithPermission!
-  adPlatformAnalytics: CapabilityWithPermission!
+  adPerformance: CapabilityWithPermission!
+  adsLibraryPreview: CapabilityWithPermission!
   account: CapabilityAccount!
   addons: CapabilityWithPermission!
   ai: CapabilityWithPermission!
   api: CapabilityWithPermission!
+  audiences: CapabilityAudiences!
   auditLog: CapabilityWithPermission!
   billing: CapabilityWithPermission!
   commenting: CapabilityWithPermission!
@@ -3901,6 +4577,7 @@ type Capabilities {
   installation: CapabilityWithPermission!
   liveActivity: CapabilityWithPermission!
   notifications: CapabilityWithPermission!
+  pageSpeed: CapabilityPageSpeed!
   recordings: CapabilityRecording!
   sharing: CapabilityWithPermission!
   siteSettings: CapabilityWithPermission!
@@ -3908,6 +4585,7 @@ type Capabilities {
   snapshots: CapabilitySnapshot!
   sso: CapabilityWithPermission!
   surveys: CapabilityWithPermission!
+  tasks: CapabilityWithPermission!
   teamSettings: CapabilityWithPermission!
   trackingOptions: CapabilityWithPermission!
   trafficAnalysis: CapabilityWithPermission!
@@ -3926,6 +4604,16 @@ differ from the generic capability shape.
 type CapabilityAccount {
   permissions: CapabilityPermission
   quotas: CapabilityAccountQuota
+}
+
+type CapabilityAudiences {
+  permissions: CapabilityPermission
+  allowedTargetingCriteria: AudienceCriterias
+}
+
+type AudienceCriterias {
+  level: AudienceLevel!
+  criterias: String!
 }
 
 type CapabilityAccountQuota {
@@ -3950,6 +4638,21 @@ type CapabilitySnapshot {
 type CapabilitySnapshotQuota {
   totalSnapshots: CapabilityQuota
   visitsPerSnapshot: CapabilityQuota
+}
+
+type CapabilityPageSpeed {
+  permissions: CapabilityPageSpeedPermission
+  quotas: CapabilityPageSpeedQuota
+}
+
+type CapabilityPageSpeedPermission {
+  nav: CapabilityPermissionValue
+  view: CapabilityPermissionValue
+  edit: CapabilityPermissionValue
+}
+
+type CapabilityPageSpeedQuota {
+  totalPages: CapabilityQuota
 }
 
 type CapabilitySite {
@@ -3982,6 +4685,10 @@ type CapabilityPermission {
   edit: CapabilityPermissionValue
 
   create: CapabilityPermissionValue
+
+  manage: CapabilityPermissionValue
+
+  import: CapabilityPermissionValue
 
   "Specific to recordings"
   settings: CapabilityPermissionValue
@@ -4055,8 +4762,191 @@ enum CapabilityReasons {
   "Feature can not be accessed because quota limit reached"
   QUOTA
 
-  "Contact support to get help\/access with this feature"
+  "Contact support to get help/access with this feature"
   CONTACT_SUPPORT
+}
+
+enum AudienceLevel {
+  NONE
+  LEGACY
+  PRO
+  ALL
+}
+
+enum SiteAssetType {
+  BRAND_GUIDELINES
+  LOGO
+}
+
+type SiteAsset {
+  id: Int!
+  siteId: Int!
+  type: SiteAssetType!
+  revision: Int!
+  content: String!
+  image: Image
+  createdByUserId: Int!
+  createdByName: String!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type BrandGuideline {
+  id: Int!
+  siteId: Int!
+  revision: Int!
+  content: String!
+  createdByUserId: Int!
+  createdByName: String!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CancellationMetric {
+  key: CancellationMetricKey!
+  value: Int!
+}
+
+enum CancellationMetricKey {
+  CONVERSIONS_TRACKED
+  ERRORS_DETECTED
+  EXPERIMENT_VISITORS
+  SESSIONS_RECORDED
+  HEATMAP_VISITS
+  SURVEY_RESPONSES
+  CTA_CLICKS
+  VISITORS_TRACKED
+  FUNNELS_BUILT
+}
+
+type DefaultPaymentMethod {
+  brand: String
+  last4: String
+  expMonth: Int
+  expYear: Int
+}
+
+type SubscriptionUpdatePreview {
+  "Amount charged now for the change, in the smallest currency unit (cents)."
+  amountDueNow: Int
+
+  currency: String
+
+  "Stripe proration timestamp; pass back to updateSubscriptionItems so the charge matches."
+  prorationDate: Int
+
+  requiresCheckout: Boolean!
+
+  "Unix timestamp for when the change takes effect (now for immediate, next renewal for scheduled)."
+  effectiveDate: Int
+
+  "True when confirming ends the customer's trial now and charges them immediately."
+  endsTrial: Boolean!
+
+  "Recurring amount at the next renewal, in cents (e.g. the new rate for a scheduled downgrade)."
+  nextAmount: Int
+}
+
+type TieredPricingPlan {
+  planSlug: String!
+  label: String!
+  monthly: TieredPricingInterval
+  yearly: TieredPricingInterval
+}
+
+type TieredPricingInterval {
+  pageviewsAddonPriceId: String
+  recordingsAddonPriceId: String
+  tiers: [TieredPricingTier!]!
+}
+
+type TieredPricingTier {
+  pageviews: Int
+  recordings: Int
+  price: Int!
+  stripeId: String!
+}
+
+type PricingGridResult {
+  plans: [PricingGridPlan!]!
+  currentPlan: String!
+  showAddOnHeatmaps: Boolean!
+  availableIntervals: [String!]!
+  paymentProvider: String!
+}
+
+type PricingGridPlan {
+  name: String!
+  label: String!
+  monthly: PricingGridInterval
+  yearly: PricingGridInterval
+  features: [String!]!
+}
+
+type PricingGridInterval {
+  price: Int!
+  stripeId: String!
+  semrushId: String
+}
+
+enum PricingExperienceKind {
+  LEGACY
+  ANALYTICS_GROWTH
+}
+
+type PricingExperienceResult {
+  experience: PricingExperienceKind!
+  plans: [PricingExperiencePlan!]!
+  comparison: [PricingComparisonCategory!]!
+}
+
+type PricingExperiencePlan {
+  planKey: String!
+  label: String!
+  subtext: String
+  priceLabel: String
+  monthlyPrice: Int
+  yearlyPrice: Int
+  ctaLabel: String!
+  ctaVariant: String!
+  trafficLabel: String
+  trafficDefault: String
+  recordingsIncluded: String
+  customLabel: String
+  cardFeatures: [PricingCardFeature!]!
+}
+
+type PricingCardFeature {
+  text: String!
+
+  tooltip: String
+
+  linkText: String
+
+  "Stable key the shell resolves to a support URL; null for non-linked features."
+  hrefKey: String
+}
+
+type PricingComparisonCategory {
+  "Stable category key; the shell resolves it to an icon."
+  key: String!
+
+  name: String!
+
+  features: [PricingComparisonFeature!]!
+}
+
+type PricingComparisonFeature {
+  "Stable feature key; the shell resolves it to a support URL when one exists."
+  key: String!
+
+  name: String!
+
+  "Per-plan cell value keyed by plan key: boolean or display string."
+  values: JSON!
+
+  "Per-plan tooltip keyed by plan key; only present where a tooltip exists."
+  tooltips: JSON!
 }
 
 """
@@ -4139,7 +5029,33 @@ Union of all audit-log action shapes. The concrete type is inferred from the und
 record and, for shared metrics like surveys, CTAs, and feature usage, from action-specific
 discriminator fields.
 """
-union AuditableAction = AbTestRatioChange | InternalUrlVisited | BillingChange | RecordingSettingsChange | DeletedSite | DeletedSnapshots | DeletedRecordings | DeletedAbTest | DuplicatedAbTest | SnapshotsCreated | SnapshotSettingsChange | SurveyCreated | SurveyEdited | SurveyToggled | DeletedSurvey | SurveyViewResponses | CtaCreated | CtaEdited | CtaToggled | DeletedCta | CtaViewResponses | GoalCreated
+union AuditableAction =
+  | AbTestRatioChange
+  | AudienceEdited
+  | InternalUrlVisited
+  | BillingChange
+  | RecordingSettingsChange
+  | DeletedSite
+  | DeletedSnapshots
+  | DeletedRecordings
+  | DeletedAbTest
+  | DuplicatedAbTest
+  | SnapshotsCreated
+  | SnapshotSettingsChange
+  | SurveyCreated
+  | SurveyEdited
+  | SurveyToggled
+  | DeletedSurvey
+  | SurveyViewResponses
+  | CtaCreated
+  | CtaEdited
+  | CtaToggled
+  | DeletedCta
+  | CtaViewResponses
+  | GoalCreated
+  | PageSpeedReportCreated
+  | PageSpeedReportDeleted
+  | PageSpeedReportTriggered
 
 type AbTestRatioChange {
   id: Int!
@@ -4154,6 +5070,27 @@ type AbTestRatioChange {
   currentViews: String!
   currentConversions: String!
   timestamp: Int!
+}
+
+type AudienceEdited {
+  id: Int!
+  userId: Int!
+  guestId: Int
+  guestEmail: String
+  admin: Boolean!
+  audienceId: ID!
+  timestamp: Int!
+  previousDefinition: JSON
+  resultingDefinition: JSON
+  affectedResources: [AudienceAffectedResource!]!
+  affectedResourceCount: Int!
+}
+
+type AudienceAffectedResource {
+  resourceId: ID!
+  resourceType: AddonType!
+  slots: [AudienceAttachmentSlot!]!
+  publicationState: AudienceResourcePublicationState!
 }
 
 type InternalUrlVisited {
@@ -4399,6 +5336,45 @@ type GoalCreated {
   siteId: Int
 }
 
+type PageSpeedReportCreated {
+  id: Int!
+  userId: Int!
+  guestId: Int
+  guestEmail: String
+  admin: Boolean!
+  timestamp: Int!
+  pageId: Int
+  pageTitle: String
+  siteId: Int
+  sourceUrl: String
+}
+
+type PageSpeedReportDeleted {
+  id: Int!
+  userId: Int!
+  guestId: Int
+  guestEmail: String
+  admin: Boolean!
+  timestamp: Int!
+  pageId: Int
+  pageTitle: String
+  siteId: Int
+  sourceUrl: String
+}
+
+type PageSpeedReportTriggered {
+  id: Int!
+  userId: Int!
+  guestId: Int
+  guestEmail: String
+  admin: Boolean!
+  timestamp: Int!
+  pageId: Int
+  pageTitle: String
+  siteId: Int
+  sourceUrl: String
+}
+
 """
 Filters and pagination controls for the audit feed. Defaults favor recent results, a 100-item
 page size, and the core action types used by the product UI.
@@ -4427,6 +5403,17 @@ enum AbTestRatioChangeType {
   MANUAL
 }
 
+enum AudienceAttachmentSlot {
+  PRIMARY
+  DRAFT
+}
+
+enum AudienceResourcePublicationState {
+  NEVER_PUBLISHED
+  PUBLISHED_ACTIVE
+  PUBLISHED_INACTIVE
+}
+
 enum AuditableActionListSortOrder {
   ASC
   DESC
@@ -4438,6 +5425,7 @@ Supported audit action filters. Survey and CTA variants fan out from shared metr
 """
 enum AuditableActionTypes {
   AB_TEST_RATIO_CHANGE
+  AUDIENCE_EDITED
   INTERNAL_URL_VISITED
   BILLING_CHANGE
   RECORDING_SETTINGS_CHANGE
@@ -4450,8 +5438,6 @@ enum AuditableActionTypes {
   SNAPSHOTS_CREATED
   SNAPSHOT_SETTINGS_CHANGE
   INSTALL
-  SNAPSHOTS_CREATED
-  SNAPSHOT_SETTINGS_CHANGE
   SURVEY_CREATED
   SURVEY_EDITED
   SURVEY_TOGGLED
@@ -4463,6 +5449,9 @@ enum AuditableActionTypes {
   DELETED_CTA
   CTA_VIEW_RESPONSES
   GOAL_CREATED
+  PAGE_SPEED_REPORT_CREATED
+  PAGE_SPEED_REPORT_DELETED
+  PAGE_SPEED_REPORT_TRIGGERED
 }
 
 """
@@ -4491,6 +5480,8 @@ type GranularBucket {
 
 type DayValue {
   date: String
+  startDate: String
+  endDate: String
   value: Float
   prevValue: Float
   pctChange: Float
@@ -4498,6 +5489,8 @@ type DayValue {
 
 type ConversionDay {
   date: String
+  startDate: String
+  endDate: String
   value: Float
 }
 
@@ -4529,6 +5522,7 @@ type CategoricalMetric {
 type CategoricalMetricOverTime {
   name: String
   domain: String
+  bucket: [DayValue]
   dailyData: [DayValue]
 }
 
@@ -4674,6 +5668,12 @@ enum AnalyticsDimension {
   UTM_CONTENTS
 }
 
+enum AnalyticsMetric {
+  VISITORS
+  PAGE_VIEWS
+  SESSIONS
+}
+
 enum OrderDir {
   DESC
   ASC
@@ -4722,7 +5722,7 @@ type Addon {
 
   siteId: Int!
 
-  "The name\/title of the survey"
+  "The name/title of the survey"
   name: String!
 
   "The serialized JSON content of the survey"
@@ -4749,11 +5749,15 @@ type Addon {
   "The goal linked to this addon"
   goal: GoalLinked
 
-  "The draft name\/title of the survey"
+  "The draft name/title of the survey"
   draftName: String
 
   "The draft serialized JSON content of the addon"
   draftContent: String
+
+  primaryAudience: AddonAudience
+
+  draftAudience: AddonAudience
 
   "The version of the survey, modifying the survey structure will increment the version"
   formatVersion: Int!
@@ -4771,6 +5775,18 @@ type Addon {
 enum AddonType {
   SURVEY
   CTA
+}
+
+type AddonContentContract {
+  contractRevision: String!
+  schema: JSON!
+  example: JSON!
+}
+
+type AddonAudience {
+  id: String!
+  definition: JSON!
+  saved: Boolean!
 }
 
 """
@@ -4850,105 +5866,292 @@ enum AddonStatus {
   INACTIVE
 }
 
-enum AdPlatformSource {
-  META
-  GOOGLE
-  REDDIT
-}
-
-type AdPlatformAnalyticsSummary {
-  impressions: Int!
-  clicks: Int!
-  spendMicros: Int!
-  conversions: Float!
-  conversionValueMicros: Int!
-  roas: Float!
-  ctr: Float!
-  cpcMicros: Int!
-  cpaMicros: Int!
-}
-
-type AdPlatformAnalyticsDay {
-  date: String!
-  impressions: Int!
-  clicks: Int!
-  spendMicros: Int!
-  conversions: Float!
-  conversionValueMicros: Int!
-  roas: Float!
-}
-
-type AdPlatformAnalyticsPlatformTotal {
-  platform: AdPlatformSource!
-  impressions: Int!
-  clicks: Int!
-  spendMicros: Int!
-  conversions: Float!
-  conversionValueMicros: Int!
-  roas: Float!
-}
-
-"""
-Rollup for one synced campaign; ranked in `top_campaigns` by spend, then clicks, with a fallback
-name when campaign metadata is missing.
-"""
-type AdPlatformAnalyticsCampaign {
-  id: Int!
-  platformId: String
-  name: String!
-  platform: AdPlatformSource!
-  impressions: Int!
-  clicks: Int!
-  spendMicros: Int!
-  conversions: Float!
-  conversionValueMicros: Int!
-  roas: Float!
-}
-
-type AdPlatformAnalyticsAd {
-  id: Int!
-  platformId: String
-  name: String!
-  platform: AdPlatformSource!
-  impressions: Int!
-  clicks: Int!
-  spendMicros: Int!
-  conversions: Float!
-  conversionValueMicros: Int!
-  roas: Float!
-}
-
-type AdPlatformAnalyticsConnectionStatus {
+type AdPerformanceConnectionStatus {
   connectionId: Int!
   accountId: String
   platform: AdPlatformSource!
   oldestImportedDataAt: Int
+  isPopulatingData: Boolean!
+  isSyncing: Boolean!
   lastEntitiesSyncedAt: Int
   lastMetricsSyncedAt: Int
   lastSyncedAt: Int
   lastSyncedDate: String
 }
 
-"""
-Ad-performance dashboard payload that mixes aggregated metrics with connection-sync metadata in
-one request.
-"""
-type AdPlatformAnalyticsDashboard {
-  summary: AdPlatformAnalyticsSummary!
+type AdPerformanceHeader {
+  connections: [AdPerformanceConnectionStatus!]!
+}
 
-  daily: [AdPlatformAnalyticsDay!]!
+type AdPerformanceAdIdentity {
+  id: Int!
+  platformId: String
+  name: String!
+  platform: AdPlatformSource!
+  campaignName: String
+}
 
-  platformTotals: [AdPlatformAnalyticsPlatformTotal!]!
+type AdPerformanceCreativePreview {
+  previewSupported: Boolean!
+  template: String
+  placementLabel: String
+  advertiserName: String
+  headline: String
+  headlines: [String!]
+  body: String
+  descriptions: [String!]
+  destinationUrl: String
+  displayUrl: String
+  path1: String
+  path2: String
+  imageUrl: String
+  videoUrl: String
+  providerPreviewUrl: String
+  mediaType: String
+  cards: [AdPerformanceCreativePreviewCard!]
+}
 
-  """
-  Top campaigns within the filtered result set, sorted by spend descending and limited by the
-  query `limit` argument.
-  """
-  topCampaigns: [AdPlatformAnalyticsCampaign!]!
+type AdPerformanceCreativePreviewCard {
+  headline: String
+  body: String
+  destinationUrl: String
+  displayUrl: String
+  imageUrl: String
+  videoUrl: String
+  mediaType: String
+}
 
-  topAds: [AdPlatformAnalyticsAd!]!
+type AdPerformanceAdPreviewPayload {
+  ad: AdPerformanceAdIdentity!
+  preview: AdPerformanceCreativePreview!
+}
 
-  connections: [AdPlatformAnalyticsConnectionStatus!]!
+enum AdPerformanceAttributionModel {
+  FIRST_TOUCH
+  LAST_TOUCH
+}
+
+enum AdPerformanceDataMode {
+  PLATFORM
+  UTM
+}
+
+type AdPerformanceGoalOption {
+  id: Int!
+  name: String!
+}
+
+type AdPerformanceControls {
+  dataMode: AdPerformanceDataMode!
+  availablePlatforms: [AdPlatformSource!]!
+  selectedPlatforms: [AdPlatformSource!]!
+  availableGoals: [AdPerformanceGoalOption!]!
+  selectedGoalId: Int
+  selectedCampaignIds: [Int!]!
+  selectedAdGroupIds: [Int!]!
+  selectedAdIds: [Int!]!
+  attributionModel: AdPerformanceAttributionModel!
+  conversionWindowDays: Int!
+}
+
+type AdPerformanceAdTreeAd {
+  id: Int!
+  platformId: String
+  name: String!
+}
+
+type AdPerformanceAdTreeAdGroup {
+  id: Int!
+  name: String!
+  ads: [AdPerformanceAdTreeAd!]!
+}
+
+type AdPerformanceAdTreeCampaign {
+  id: Int!
+  name: String!
+  adGroups: [AdPerformanceAdTreeAdGroup!]!
+}
+
+type AdPerformanceAdTreePlatform {
+  platform: AdPlatformSource!
+  accountId: String
+  campaigns: [AdPerformanceAdTreeCampaign!]!
+}
+
+type AdPerformanceAdTreePayload {
+  platforms: [AdPerformanceAdTreePlatform!]!
+  truncated: Boolean!
+}
+
+type AdPerformanceSummary {
+  spendMicros: Int!
+  adTrafficVisits: Int!
+  averageSpendPerVisitMicros: Int!
+  conversionRate: Float!
+  totalConversions: Int!
+  averageConversions: Float!
+  averageSpendPerConversionMicros: Int!
+  returnOnAdSpend: Float!
+  totalRevenueMicros: Int!
+  averageRevenuePerConversionMicros: Int!
+}
+
+type AdPerformanceUnmatchedTrackingValue {
+  value: String!
+  visits: Int!
+}
+
+type AdPerformanceTrackingCoverage {
+  totalTrackedVisits: Int!
+  matchedVisits: Int!
+  unmatchedVisits: Int!
+  topUnmatchedValues: [AdPerformanceUnmatchedTrackingValue!]!
+}
+
+enum AdPerformanceSliceStatus {
+  OK
+  TIMEOUT
+  ERROR
+}
+
+type AdPerformanceSlice {
+  status: AdPerformanceSliceStatus!
+}
+
+type AdPerformanceSlices {
+  spend: AdPerformanceSlice!
+  visits: AdPerformanceSlice!
+  attribution: AdPerformanceSlice!
+  controls: AdPerformanceSlice!
+  perAd: AdPerformanceSlice!
+}
+
+enum AdPerformanceTopMetric {
+  SPEND
+  TRAFFIC
+  CONVERSIONS
+  RETURN
+}
+
+enum AdPerformanceMetricKey {
+  SPEND_MICROS
+  AD_TRAFFIC_VISITS
+  AVERAGE_SPEND_PER_VISIT_MICROS
+  CONVERSION_RATE
+  TOTAL_CONVERSIONS
+  AVERAGE_CONVERSIONS
+  AVERAGE_SPEND_PER_CONVERSION_MICROS
+  RETURN_ON_AD_SPEND
+  TOTAL_REVENUE_MICROS
+  AVERAGE_REVENUE_PER_CONVERSION_MICROS
+}
+
+enum AdPerformanceStackQuantity {
+  SPEND_MICROS
+  AD_TRAFFIC_VISITS
+  TOTAL_CONVERSIONS
+  TOTAL_REVENUE_MICROS
+}
+
+type AdPerformancePreviewSnippet {
+  headline: String
+  body: String
+  displayUrl: String
+  imageUrl: String
+  videoUrl: String
+  mediaType: String
+}
+
+type AdPerformanceTopAd {
+  adId: Int!
+  platform: AdPlatformSource
+  platformId: String
+  name: String!
+  campaignName: String
+  adGroupName: String
+  previewSnippet: AdPerformancePreviewSnippet
+  spendMicros: Int!
+  adTrafficVisits: Int!
+  totalConversions: Int!
+  convertedVisitors: Int!
+  conversionRate: Float!
+  totalRevenueMicros: Int!
+  returnOnAdSpend: Float!
+}
+
+type AdPerformanceOtherAds {
+  adCount: Int!
+  spendMicros: Int!
+  adTrafficVisits: Int!
+  totalConversions: Int!
+  convertedVisitors: Int!
+  totalRevenueMicros: Int!
+}
+
+type AdPerformanceTopAdsForKey {
+  metricKey: AdPerformanceMetricKey!
+  stackQuantity: AdPerformanceStackQuantity!
+  top: [AdPerformanceTopAd!]!
+  other: AdPerformanceOtherAds!
+}
+
+type AdPerformanceDailyMetricsForKey {
+  metricKey: AdPerformanceMetricKey!
+  stackQuantity: AdPerformanceStackQuantity!
+  buckets: [AdPerformanceDailyBucket!]!
+}
+
+enum AdPerformanceRecommendationBucket {
+  SPEND_MORE
+  IMPROVE_CONVERSION
+  STOP_RUNNING
+  INSUFFICIENT_DATA
+}
+
+type AdPerformanceRecommendationSection {
+  bucket: AdPerformanceRecommendationBucket!
+  title: String!
+  headline: String!
+  why: String!
+  adCount: Int!
+  ads: [AdPerformanceTopAd!]!
+}
+
+type AdPerformanceTopAdsForMetric {
+  metric: AdPerformanceTopMetric!
+  top: [AdPerformanceTopAd!]!
+  other: AdPerformanceOtherAds!
+}
+
+type AdPerformanceDailyBucket {
+  date: String!
+  top1Value: Int!
+  top2Value: Int!
+  top3Value: Int!
+  otherValue: Int!
+}
+
+type AdPerformanceDailyMetricsForMetric {
+  metric: AdPerformanceTopMetric!
+  buckets: [AdPerformanceDailyBucket!]!
+}
+
+type AdPerformance {
+  controls: AdPerformanceControls!
+  summary: AdPerformanceSummary!
+  trackingCoverage: AdPerformanceTrackingCoverage
+  connections: [AdPerformanceConnectionStatus!]!
+  topAds: [AdPerformanceTopAdsForMetric!]!
+  dailyMetrics: [AdPerformanceDailyMetricsForMetric!]!
+  topAdsByKey: [AdPerformanceTopAdsForKey!]!
+  dailyMetricsByKey: [AdPerformanceDailyMetricsForKey!]!
+  recommendations: [AdPerformanceRecommendationSection!]!
+  slices: AdPerformanceSlices
+}
+
+type InteragentJwt {
+  token: String!
+  expires: Int!
 }
 
 """
@@ -4976,6 +6179,8 @@ type MeDetails {
 
   guestId: Int
 
+  createdAt: Int
+
   avatarUrl: String
 
   email: String
@@ -4983,6 +6188,8 @@ type MeDetails {
   name: String
 
   language: String
+
+  onboarding: UserOnboarding
 
   settings: UserSettings
 
@@ -5000,7 +6207,7 @@ type MeDetails {
   """
   flags: [String]
 
-  "Returns the raw user_data key\/value records stored for the current viewer."
+  "Returns the raw user_data key/value records stored for the current viewer."
   userData: [UserData!]!
 
   """
@@ -5065,13 +6272,37 @@ type UserSettings {
   useSecureCookies: Boolean
 }
 
+type UserOnboarding {
+  startedAt: Int
+  completedAt: Int
+  flow: String
+  siteUrl: String
+  siteTech: String
+}
+
 """
 Tracking-options container; selecting nested fields triggers capability-gated lookups instead of
 returning stored data eagerly.
 """
 type Options {
   currentIp: String
+
   userBlockedIps: String
+
+  """
+  Links that switch cookie-based blocking on and off for the visitor's own browser on one site.
+  Null when the account's tracking script would not honour them.
+  """
+  cookieBlockLinks(siteId: Int!): CookieBlockLinks
+}
+
+"""
+A pair of links for one site: following `block` stops the tracking script from recording the
+browser that opened it, and `unblock` reverses that.
+"""
+type CookieBlockLinks {
+  block: String!
+  unblock: String!
 }
 
 """
@@ -5091,6 +6322,8 @@ scoping, and per-account integrations.
 """
 type UserAccount {
   id: Int
+
+  harnessId: String
 
   isAccountHolder: Boolean
 
@@ -5150,10 +6383,12 @@ type SubscriptionTypes {
   abTesting: SubscriptionDetails
 }
 
-"""
-Normalized subscription status for one product area, including derived booleans, current plan
-data, and any pending next-plan or fallback pricing.
-"""
+"A non-plan product carried on the subscription, shown as its own cart/dashboard line."
+type SubscriptionProduct {
+  name: String
+  amount: Float
+}
+
 type SubscriptionDetails {
   id: Int!
   paymentPlan: PaymentPlan
@@ -5166,8 +6401,10 @@ type SubscriptionDetails {
   cancelledOn: Int
   expiredOn: Int
   renewOn: Int
+  updatedAt: Int
   storageDuration: Int
   amount: Float
+  products: [SubscriptionProduct]
   intervalType: SubscriptionIntervalType
   interval: Int
   nextAmount: Float
@@ -5212,6 +6449,17 @@ type AbTestsListMeta {
   nextPageCursor: String!
   hasNextPage: Boolean!
   limit: Int!
+}
+
+type AbTestRef {
+  id: Int!
+  name: String!
+  variants: [AbTestVariantRef!]!
+}
+
+type AbTestVariantRef {
+  id: Int!
+  variantName: String!
 }
 
 type AbTestStatusCountsResult {
@@ -5317,7 +6565,6 @@ type AbTestGoal {
 }
 
 type AbTestDistribution {
-  date: Int!
   startDate: Int!
   endDate: Int!
   distribution: [AbTestDistributionItem!]
@@ -5393,12 +6640,6 @@ enum AbTestVariantSortField {
   CONVERSION_RATE
   SIGNIFICANCE
   VALUE
-}
-
-input UniversalSegmentCreateParams {
-  siteIds: [Int!]!
-  name: String!
-  definition: String!
 }
 
 input SsoSpConfigurationInput {
@@ -5591,8 +6832,27 @@ input PlaylistParams {
   filter: String
 }
 
-type PageVersionResponse {
+type PageSpeedPageMutationPayload {
   id: Int!
+  siteId: Int!
+  sourceUrl: String!
+  isRefreshing: Boolean!
+  runs: [PageSpeedRunMutationPayload!]!
+}
+
+type PageSpeedRunMutationPayload {
+  id: Int!
+  device: PageSpeedDevice!
+  trigger: String!
+}
+
+enum PageSpeedDevice {
+  DESKTOP
+  PHONE
+}
+
+type PageVersionResponse {
+  id: String!
   name: String
   patch: String
   publishedAt: String
@@ -5616,14 +6876,15 @@ type PageEditorValidateUserResponse {
 }
 
 type PageEditorUpdateVersionResponse {
-  id: Int!
+  id: String!
   thumbnailUrl: String!
   thumbnailUploadUrl: S3PresignPost!
 }
 
 type PageEditorCreatePageResponse {
   editorId: String!
-  pageId: Int!
+  pageId: String!
+  token: String!
   thumbnailUrl: String!
   thumbnailUploadUrl: S3PresignPost!
 }
@@ -5644,12 +6905,14 @@ type Notification {
 enum NotificationResource {
   GOAL
   SURVEY
+  SITE
 }
 
 enum NotificationAction {
   CONVERTED
   RESPONDED
   COMPLETED
+  ERROR_OCCURRED
 }
 
 enum ChannelInputType {
@@ -5681,7 +6944,6 @@ input SimpleEmailParams {
 }
 
 input InstructionsEmailParams {
-  developerName: String!
   developerEmail: String!
   siteUrl: String!
   message: String
@@ -5698,9 +6960,14 @@ type GoalMutationResult {
 
 input GoalCreateParams {
   siteId: Int!
-  name: String
+
+  "Conversion name. Must be between 1 and 255 characters."
+  name: String!
+
   autoName: String!
+
   triggers: [GoalTriggerInput!]!
+
   syncValues: Boolean
 }
 
@@ -5714,11 +6981,18 @@ input GoalEditParams {
 
 input GoalTriggerInput {
   id: Int
+
+  "Optional trigger name. Must be at most 20 characters."
   name: String
+
   autoName: String
+
   filter: String!
+
   valueType: GoalValueType
+
   fixedValue: GoalFixedValueInput
+
   elementValue: GoalElementValueInput
 }
 
@@ -5779,10 +7053,6 @@ input FolderUpdateParams {
   title: String!
 }
 
-enum OptableFeatureFlag {
-  SHELL_BLACK
-}
-
 input ErrorStatusParams {
   fingerprintMd5: String!
   status: ErrorStatusEnum
@@ -5804,30 +7074,100 @@ type UpdateErrorResponse {
   statusChangeAt: Int
 }
 
+type CancelSubscriptionResult {
+  status: String!
+}
+
+type CreateSubscriptionResult {
+  status: String!
+  clientSecret: String
+}
+
+type SetDefaultPaymentMethodResult {
+  paymentMethod: DefaultPaymentMethod
+}
+
 type StripeCustomerSessionResult {
   "The client secret for the customer session. Null if user has no Stripe customer."
   clientSecret: String
 }
 
+type CustomCheckoutSessionResult {
+  checkoutUrl: String
+}
+
+"""
+Result of an `updateSubscriptionItems` mutation. `kind` is `UPDATED` — the
+subscription was updated directly. When the prorated charge needs authentication
+(SCA), `clientSecret` is set so the client confirms the PaymentIntent in-app.
+Otherwise `url` redirects to our success page (or, as a last resort, Stripe's
+hosted invoice page).
+"""
+type UpdateSubscriptionResult {
+  url: String
+  clientSecret: String
+  kind: String
+  scheduledAt: Int
+}
+
+type InitializeMetaAdsConnectionResult {
+  redirectUrl: String
+}
+
+type DeleteAdPlatformConnectionResult {
+  connectionId: Int!
+  platform: AdPlatformSource!
+}
+
 input AddonCreateParams {
   name: String!
+
+  "JSON-encoded add-on content matching the current contract"
   content: String!
+
+  "JSON-encoded primary Audience definition; null selects all visitors"
+  audienceDefinition: String
+
+  "Temporary compatibility option for copying a legacy add-on"
+  allowLegacy: Boolean
+
   active: Boolean!
+
   addonTemplateId: Int
+
   suggestionId: Int
+
   draftName: String
+
+  "Optional JSON-encoded unpublished draft content matching the current contract"
   draftContent: String
+
   type: AddonType!
+
   goalId: Int
 }
 
 input AddonEditParams {
   id: String!
+
   name: String
+
+  "JSON-encoded live add-on content; AI may not change this after publication"
   content: String
+
+  "JSON-encoded primary Audience definition; null selects all visitors"
+  audienceDefinition: String
+
   siteId: Int!
+
   draftName: String
+
+  "JSON-encoded unpublished content; AI may edit this even after publication"
   draftContent: String
+
+  "JSON-encoded draft Audience definition; null selects all visitors"
+  draftAudienceDefinition: String
+
   goalId: Int
 }
 
@@ -5888,6 +7228,7 @@ input AbTestCreateInput {
 
   matchingUrl: String!
 
+  "Device types used by flow execution and snapshots. This must match the effective audience devices; a null audience targets all three device types."
   devices: [SnapshotDevice!]
 
   createSnapshots: Boolean
@@ -5901,6 +7242,9 @@ input AbTestCreateInput {
   patchStrategy: AbTestPatchStrategy
 
   notes: String
+
+  "JSON-encoded visitor audience definition. Preserve every requested criterion, including device criteria; null targets everyone, and devices must contain the matching effective device set."
+  audienceDefinition: String
 
   "Not used in the AB Test creation, it is there only for draft data"
   goal: GoalDraftParams
@@ -5967,6 +7311,8 @@ type AbTestCheckPageResult {
   siteId: Int
   siteCreationSuccessful: Boolean
   needToUpdateSiteId: Boolean
+  isLoginPage: Boolean
+  finalUrl: String
 }
 
 type AbTestMutationResult {
@@ -6129,6 +7475,7 @@ enum SharedUrlType {
   CTA
   GOAL
   FUNNEL
+  PAGE_SPEED_REPORT
   WEB_ANALYTICS_SITE
   WEB_ANALYTICS_GA_PROPERTY
   UNKNOWN
@@ -6173,6 +7520,12 @@ enum TimeUnit {
   MONTH
 }
 
+enum AdPlatformSource {
+  META
+  GOOGLE
+  REDDIT
+}
+
 type Folder {
   id: Int
   siteId: Int
@@ -6213,6 +7566,7 @@ type AbTest {
   variants: [AbTestVariant!]
   variantsCount: Int
   draft: String
+  audienceDefinition: JSON
   originalId: Int
   notes: String
   conversionGoals: [AbTestGoal]
