@@ -4603,7 +4603,15 @@ differ from the generic capability shape.
 """
 type CapabilityAccount {
   permissions: CapabilityPermission
+
   quotas: CapabilityAccountQuota
+
+  """
+  How the account's page views are metered: `all_page_views` counts every script load, so
+  exhausting the quota stops data collection for every feature. `legacy` only gates Heatmaps
+  and A/B Testing.
+  """
+  pageViewMeteringStrategy: String
 }
 
 type CapabilityAudiences {
