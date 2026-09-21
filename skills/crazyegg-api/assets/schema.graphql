@@ -2785,6 +2785,12 @@ shared resource.
 """
 type SharedResourceRedirect {
   url: String!
+
+  """
+  Whether the client should append the current page's query parameters to `url`. False for
+  shortened export links whose `url` is a signed destination that must be used verbatim.
+  """
+  forwardQueryParams: Boolean!
 }
 
 """
