@@ -257,7 +257,10 @@ type RootQueryType {
     numSegments: Int
   ): AnalyticsSingle
 
-  "This is similar to an analytics dimension, but instead returns the over time results."
+  """
+  Returns over-time results under the requested dimension field only. Sibling aggregate fields are
+  null; request totals such as `pageViews` from `analytics` instead.
+  """
   analyticsOverTime(
     dimension: AnalyticsDimension!
     metric: AnalyticsMetric!
