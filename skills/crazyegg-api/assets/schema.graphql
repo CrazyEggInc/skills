@@ -2820,6 +2820,7 @@ type SharedSource {
   webAnalyticsEnabledAt: Int
   lastSuccessAt: Int
   enabledAt: Int
+  oldestImportedDataAt: Int
   currentTimezone: String
   createdAt: Int
 }
