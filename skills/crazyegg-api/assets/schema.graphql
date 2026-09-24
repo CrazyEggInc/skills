@@ -4618,10 +4618,13 @@ type CapabilityAccount {
 
   """
   How the account's page views are metered: `all_page_views` counts every script load, so
-  exhausting the quota stops data collection for every feature. `legacy` only gates Heatmaps
-  and A/B Testing.
+  exhausting the quota stops data collection for every feature unless
+  `allow_tracking_after_limit` is set. `legacy` only gates Heatmaps and A/B Testing.
   """
   pageViewMeteringStrategy: String
+
+  "Whether an `all_page_views` account keeps collecting data past its page-view quota."
+  allowTrackingAfterLimit: Boolean
 }
 
 type CapabilityAudiences {
