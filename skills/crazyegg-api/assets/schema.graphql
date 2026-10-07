@@ -1870,6 +1870,8 @@ type RootMutationType {
 
   pageEditorUnlockElement(pageId: String!, element: String!): Boolean
 
+  pageSpeedPagesCreate(siteId: Int!, urls: [String!]!): PageSpeedPagesMutationPayload!
+
   pageSpeedPageCreate(siteId: Int!, url: String!): PageSpeedPageMutationPayload!
 
   pageSpeedPageRefresh(pageSpeedPageId: Int!): PageSpeedPageMutationPayload!
@@ -6853,6 +6855,17 @@ input PlaylistParams {
   id: Int
   name: String
   filter: String
+}
+
+type PageSpeedPagesMutationPayload {
+  pages: [PageSpeedPageMutationPayload!]!
+  errors: [PageSpeedPageCreateError!]!
+}
+
+type PageSpeedPageCreateError {
+  index: Int!
+  url: String!
+  message: String!
 }
 
 type PageSpeedPageMutationPayload {
