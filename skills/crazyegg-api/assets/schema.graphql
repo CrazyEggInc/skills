@@ -1744,7 +1744,10 @@ type RootMutationType {
   flow ("Switch to Free"). Paid plans keep access until the end of the current billing
   period; trials switch immediately.
   """
-  switchToFree: CancelSubscriptionResult
+  switchToFree(
+    "The customer's answer to the cancellation survey, reported to support"
+    reason: String
+  ): CancelSubscriptionResult
 
   """
   Cancels the viewer's subscription from the in-app cancellation flow ("Cancel Subscription
@@ -1752,7 +1755,10 @@ type RootMutationType {
   account. Paid plans keep access until the end of the current billing period; trials cancel
   immediately.
   """
-  cancelSubscription: CancelSubscriptionResult
+  cancelSubscription(
+    "The customer's answer to the cancellation survey, reported to support"
+    reason: String
+  ): CancelSubscriptionResult
 
   brandGuidelineRevisionCreate(siteId: Int!, content: String!, expectedRevision: Int!): BrandGuideline!
     @deprecated(reason: "Use siteAssetRevisionCreate with type BRAND_GUIDELINES")
