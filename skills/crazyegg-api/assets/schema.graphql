@@ -1655,7 +1655,7 @@ type RootMutationType {
   updateError(site: Int!, errorStatus: ErrorStatusParams!): UpdateErrorResponse
 
   """
-  Creates a survey or CTA for the given site after checking type-specific create access. Returns
+  Creates a new-format survey or CTA for the given site after checking type-specific create access. Returns
   a preview token for the saved addon; invalid or unauthorized input is collapsed to a generic
   invalid-params error.
   """
@@ -7163,9 +7163,6 @@ input AddonCreateParams {
 
   "JSON-encoded primary Audience definition; null selects all visitors"
   audienceDefinition: String
-
-  "Temporary compatibility option for copying a legacy add-on"
-  allowLegacy: Boolean
 
   active: Boolean!
 
