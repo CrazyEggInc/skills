@@ -707,6 +707,8 @@ type RootQueryType {
   """
   pageSpeedPages(siteId: Int!): [PageSpeedPage!]!
 
+  pageSpeedPageDuplicates(siteId: Int!, urls: [String!]!): [PageSpeedPageDuplicate!]!
+
   pageSpeedRuns(pageSpeedPageId: Int!): [PageSpeedRun!]!
 
   pageSpeedRunAnalysis(pageSpeedRunId: Int!): PageSpeedRunAnalysis!
@@ -3289,6 +3291,12 @@ type PageSpeedPage {
   deletedAt: Int
 
   permissions: PageSpeedPagePermissions!
+}
+
+type PageSpeedPageDuplicate {
+  index: Int!
+  url: String!
+  pageId: Int
 }
 
 type PageSpeedPagePermissions {
