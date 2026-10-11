@@ -5690,7 +5690,6 @@ enum OrderColumn {
 }
 
 enum AnalyticsDimension {
-  VISITORS
   DEVICE_TYPE
   COUNTRIES
   LANGUAGES
