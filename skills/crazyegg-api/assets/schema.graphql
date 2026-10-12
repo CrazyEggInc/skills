@@ -86,6 +86,8 @@ type RootQueryType {
   """
   abTestStatusCounts(site: Int): AbTestStatusCountsResult!
 
+  aiExports(siteId: Int!): [AiExport!]!
+
   """
   Returns the current viewer profile plus session-scoped account data such as surveys, accounts,
   and subscriptions.
@@ -1612,6 +1614,8 @@ type RootMutationType {
   tracking ids, and returns only the new test id. Requires A/B testing create access.
   """
   abTestDuplicate(id: Int!): AbTestMutationResult!
+
+  createAiExport(input: AiExportInput!): AiExport
 
   initializeMetaAdsConnection(siteId: Int!, returnUrl: String!): InitializeMetaAdsConnectionResult
 
@@ -7593,6 +7597,28 @@ enum ChannelType {
   EMAIL
   API
   ZAPIER
+}
+
+type AiExport {
+  id: Int!
+  status: String!
+  startAt: Int!
+  endAt: Int!
+  features: [String!]!
+  notificationEmail: String!
+  notificationStatus: String!
+  createdAt: String!
+  expiresAt: String
+  error: String
+  downloadUrl: String
+}
+
+input AiExportInput {
+  siteId: Int!
+  startAt: Int!
+  endAt: Int!
+  features: [String!]!
+  notificationEmail: String!
 }
 
 type AbTest {
