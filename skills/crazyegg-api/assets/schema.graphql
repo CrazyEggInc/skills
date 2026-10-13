@@ -185,6 +185,9 @@ type RootQueryType {
   """
   addonDetail(id: String!): Addon
 
+  "Returns the theme from the latest addon of a type created for a site."
+  addonLatestTheme(siteId: Int!, type: AddonType!): JSON
+
   """
   Returns the current JSON Schema contract and a representative content example for a Survey
   or CTA. The revision identifies the exact vendored schema set used by mutation validation.
@@ -741,6 +744,9 @@ type RootQueryType {
   "Returns the supported language-code list used by the shell and audience filters."
   languages: [LanguageOption!]!
 
+  "Searches the locally cached Google Fonts catalog by family name."
+  googleFonts(search: String, limit: Int): [GoogleFont!]!
+
   """
   Returns a cursor-paged recordings feed for one site, applying the serialized filters payload
   and per-recording permission state.
@@ -1234,6 +1240,9 @@ type RootMutationType {
 
   "Stores up to the first 100 colors in the site's metadata and ignores any additional values."
   setSiteColors(siteId: Int!, colors: [String]!): Site!
+
+  "Stores up to 100 reusable fonts in the site's metadata."
+  setSiteFonts(siteId: Int!, fonts: [SiteFontInput!]!): Site!
 
   siteEnableAnalytics(siteId: Int!, enable: Boolean!): Site!
 
@@ -3258,6 +3267,17 @@ type LanguageOption {
   name: String!
 }
 
+type GoogleFont {
+  family: String!
+  category: String
+  variants: [String!]!
+  subsets: [String!]!
+  files: JSON!
+  version: String
+  providerLastModified: String
+  fetchedAt: Int
+}
+
 type PageSpeedPage {
   "A page speed page, which maps to the equivalent web page."
   id: Int
@@ -4737,6 +4757,9 @@ type CapabilityPermission {
 
   "Specific to addons"
   removeBranding: CapabilityPermissionValue
+
+  "Specific to addons"
+  customDesign: CapabilityPermissionValue
 
   "Specific to addons"
   manageTemplates: CapabilityPermissionValue
@@ -6860,6 +6883,14 @@ enum TrackingOption {
   REGEX
   NAMED
   GOOGLE_OPTIMIZE
+}
+
+input SiteFontInput {
+  family: String!
+  source: String!
+  resourceType: String
+  url: String
+  onLoadCallback: String
 }
 
 input SharedUrlUpdateParams {
