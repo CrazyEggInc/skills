@@ -1169,10 +1169,10 @@ type RootMutationType {
   setEnabledGaProperties(propertyIds: [Int!]!): [GaProperty!]!
 
   """
-  Starts the Segment install flow for a logged-in user with installation view access. The
-  provided return URL is signed into a redirect token and handed off to the integration service;
-  on success this returns the external redirect URL, and on any upstream failure it returns a
-  generic error.
+  Starts the Segment install flow for a logged-in user with installation view access. Returns
+  the OAuth host URL that sends the browser to Segment's consent page. After the install, Segment
+  returns the browser to the given return URL with `segment_status=ok`, or `segment_status=error`
+  and `segment_error`.
   """
   initializeSegmentIntegration(returnUrl: String!): InitializeSegmentIntegrationResult
 
