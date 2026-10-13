@@ -86,6 +86,8 @@ type RootQueryType {
   """
   abTestStatusCounts(site: Int): AbTestStatusCountsResult!
 
+  aiExport(siteId: Int!, id: Int!): AiExport
+
   aiExports(siteId: Int!): [AiExport!]!
 
   """
