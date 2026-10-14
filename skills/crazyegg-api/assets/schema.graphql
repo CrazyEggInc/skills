@@ -962,6 +962,55 @@ type RootQueryType {
   site(id: Int!): Site!
 
   """
+  Pages of the Site found by the Spider site map, with a status saying
+  whether asking again will return more.
+
+  Without `query` or `pageType` these are the Site's suggested pages, most
+  important first: pass the URLs the user has already added in `excludeUrls`
+  to get the next ones. With `query` this is URL autocomplete: pages whose
+  full URL or title contains the text, case-insensitive.
+
+  The first request for an empty map runs a quick crawl synchronously (up to
+  about 10 seconds) and requests a full crawl and, for users who may view
+  Recordings, an observe run, so the first answer is partial. While `status`
+  is `PENDING`, repeat the same request every 10 to 30 seconds, backing off,
+  to get more pages; a full crawl can take several minutes. Stop once it is
+  `READY`. On `UNAVAILABLE`, ask again after `retryAfterS` seconds, or stop
+  when it is null.
+
+  Pages seen only in the Site's Recordings, Web Analytics or Google Analytics
+  imports are returned only to users who may view Recordings.
+
+  There is no refresh entry point yet: Webmaster's `site_map_refresh` tool or
+  the admin "Run Spider" action requests a new crawl.
+  """
+  siteMapPages(
+    siteId: Int!
+
+    """
+    Autocomplete text, at most 200 characters, matched case-insensitively
+    against the full URL and the page title.
+    """
+    query: String
+
+    "Only confidently classified pages of this type. Quick-crawl pages are unclassified and never match."
+    pageType: SiteMapPageType
+
+    "Maximum number of pages, default 10. Values outside 1 to 50 are clamped to that range."
+    limit: Int
+
+    """
+    At most 200 URLs to leave out before the limit applies, for example pages
+    the user already added. Each is canonicalized like Spider's page URLs
+    (case of scheme and host, default port, trailing slash, fragment, tracking
+    parameters) and also excludes its `http` and `https` forms with and
+    without one leading `www.`. An entry without a scheme (`example.com/pricing`)
+    is read as `http://`; a relative one (`/pricing`) is ignored.
+    """
+    excludeUrls: [String!]
+  ): SiteMapPagesResult!
+
+  """
   Cursor-based snapshot listing for infinite-scroll UIs; omitting `limit` uses the server
   default, and `next_page_cursor` is derived from the IDs returned in the current page.
   """
@@ -2609,6 +2658,179 @@ enum SnapshotExportStatus {
   EXPORTING
   COMPLETED
   ERROR
+}
+
+type SiteMapPagesResult {
+  pages: [SiteMapPage!]!
+
+  "More pages matched than `limit` returned."
+  truncated: Boolean!
+
+  status: SiteMapPagesStatus!
+
+  "Why the status is `UNAVAILABLE`; null otherwise."
+  reason: SiteMapUnavailableReason
+
+  "When `UNAVAILABLE`, seconds after which asking again may help; null means stop asking."
+  retryAfterS: Int
+
+  coverage: SiteMapCoverage!
+
+  """
+  When the newest completed crawl finished, or before any crawl the newest
+  quick crawl (unix seconds).
+  """
+  projectionAt: Int
+
+  """
+  When the Site's newest observe run finished (unix seconds). Observe runs
+  import the pages seen in the Site's Recordings, Web Analytics and Google
+  Analytics imports.
+  """
+  observedAt: Int
+}
+
+type SiteMapPage {
+  url: String!
+
+  title: String
+
+  pageType: SiteMapPageType
+
+  visibility: SiteMapPageVisibility!
+
+  "Relative importance within the Site, higher first. Null until crawled."
+  importanceScore: Float
+
+  "Presigned screenshot URL, valid for 15 minutes; null without a screenshot."
+  screenshotUrl: String
+
+  "Unix seconds."
+  crawledAt: Int
+
+  "When the Site's Recordings, Web Analytics or Google Analytics imports last saw the page (unix seconds)."
+  observedAt: Int
+}
+
+enum SiteMapPagesStatus {
+  "Nothing is queued or running; asking again returns nothing new."
+  READY
+
+  """
+  A Spider run (quick crawl, crawl, enrichment, classification or observe
+  run) is queued or running, or this request asked for one; ask again in 10
+  to 30 seconds for more pages.
+  """
+  PENDING
+
+  """
+  No pages and nothing pending: the quick crawl failed or was refused; see
+  `reason`. Ask again after `retryAfterS` seconds, or stop when it is null.
+  """
+  UNAVAILABLE
+}
+
+"""
+Why `siteMapPages` is `UNAVAILABLE`. Retry later, after `retryAfterS`:
+`COOLDOWN`, `ACCOUNT_CAP`, `FETCH_DEFERRED`, `FETCH_FAILED`, `NOTHING_FOUND`,
+`TIMEOUT` and `SPIDER_UNREACHABLE`. Configuration or Spider problems that
+asking again will not fix: `NOT_CONFIGURED`, `INVALID_TOKEN`, `SPIDER_ERROR`,
+`ENQUEUE_FAILED` and `INVALID_PARAMS`. The Site cannot be mapped:
+`INVALID_HOST`, `UNAUTHORIZED` and `SITE_DELETED`.
+"""
+enum SiteMapUnavailableReason {
+  "Spider crawled the host recently and refused another quick crawl."
+  COOLDOWN
+
+  "The account reached Spider's crawl limit (reserved; Spider does not send it yet)."
+  ACCOUNT_CAP
+
+  "Another crawl of the host holds Spider's fetch slot."
+  FETCH_DEFERRED
+
+  "The Site's name is not a public host Spider may crawl."
+  INVALID_HOST
+
+  "The quick crawl reached the host but found no pages."
+  NOTHING_FOUND
+
+  "Spider could not fetch the Site's pages."
+  FETCH_FAILED
+
+  "Spider found that the user may not access the Site."
+  UNAUTHORIZED
+
+  "Spider found the Site deleted."
+  SITE_DELETED
+
+  "Spider could not queue the run."
+  ENQUEUE_FAILED
+
+  "Spider rejected the request's parameters."
+  INVALID_PARAMS
+
+  "This environment has no Spider."
+  NOT_CONFIGURED
+
+  "Spider did not answer in time."
+  TIMEOUT
+
+  "Spider could not be reached."
+  SPIDER_UNREACHABLE
+
+  "Spider answered in an unexpected way."
+  SPIDER_ERROR
+
+  "Spider rejected this environment's internal API token."
+  INVALID_TOKEN
+}
+
+enum SiteMapCoverage {
+  "The newest crawl covered the whole site."
+  COMPLETE
+
+  "The newest crawl stopped early, or only a quick crawl has run, including one this request ran."
+  PARTIAL
+
+  "Nothing has been crawled yet, not even a quick crawl."
+  NONE
+}
+
+enum SiteMapPageVisibility {
+  "A public crawl loaded the page."
+  PUBLIC
+
+  """
+  Not proven publicly loadable: seen only in the Site's Recordings, Web
+  Analytics or Google Analytics imports, or only discovered by a quick crawl.
+  """
+  PRIVATE
+}
+
+"""
+Spider's page classifier taxonomy (`Foundation.Model.Metadata.Spider.Page`
+page types); values may be added.
+"""
+enum SiteMapPageType {
+  HOMEPAGE
+  LANDING
+  PRODUCT
+  COLLECTION
+  PRICING
+  SIGNUP
+  LOGIN
+  ARTICLE
+  ARTICLE_INDEX
+  HELP_ARTICLE
+  HELP_INDEX
+  LEGAL
+  CONTACT
+  ABOUT
+  CAREERS
+  APP
+  CART_CHECKOUT
+  SEARCH
+  OTHER
 }
 
 """
