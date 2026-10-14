@@ -227,6 +227,19 @@ type RootQueryType {
   addonStatusCounts(site: Int, type: AddonType): AddonStatusCountsResult!
 
   """
+  Identified AI referral sessions and page views for a site or GA property over up to 60 days.
+  Defaults to the previous 30 complete days, excluding today. Includes ChatGPT, Claude, Gemini, Perplexity, Microsoft
+  Copilot, and Grok; source matching includes recognized hosts and their subdomains. Requires
+  web analytics view access and access to the site. Sources with no sessions are omitted.
+  """
+  analyticsAiReferrals(
+    siteId: Int
+    googleAnalyticsPropertyId: Int
+    startDate: String
+    endDate: String
+  ): AnalyticsAiReferrals
+
+  """
   Returns the analytics dashboard for a site or GA property. Requires the web analytics view
   capability, a date range, and only resolves the nested metric fields you request.
   """
@@ -5749,6 +5762,21 @@ enum OrderDir {
 enum AnalyticsSource {
   SITE
   GA_PROPERTY
+}
+
+type AnalyticsAiReferrals {
+  startDate: String!
+  endDate: String!
+  sessions: Int!
+  pageViews: Int!
+  sources: [AnalyticsAiReferralSource!]!
+}
+
+type AnalyticsAiReferralSource {
+  name: String!
+  domains: [String!]!
+  sessions: Int!
+  pageViews: Int!
 }
 
 "The `string_or_number` scalar type represents arbitrary string or numeric data."
