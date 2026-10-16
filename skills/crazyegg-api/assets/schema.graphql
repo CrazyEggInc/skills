@@ -1128,6 +1128,8 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  recordGuidedTaskEvents(events: [GuidedTaskEventInput!]!): Int
+
   """
   Requires tracking options edit access. Normalizes the submitted IP list, saves the cleaned
   text, syncs it to site settings, and returns inline validation or save errors instead of
@@ -7288,6 +7290,17 @@ input InstructionsEmailParams {
 
 type InitializeSegmentIntegrationResult {
   redirectUrl: String
+}
+
+enum GuidedTaskEventType {
+  VIEW
+  CLICK
+}
+
+input GuidedTaskEventInput {
+  id: String!
+  token: String!
+  eventType: GuidedTaskEventType!
 }
 
 type GoalMutationResult {
