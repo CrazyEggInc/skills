@@ -727,6 +727,17 @@ type RootQueryType {
   """
   pageSpeedPages(siteId: Int!): [PageSpeedPage!]!
 
+  """
+  Spider page suggestions in importance order, excluding non-deleted Page Speed pages for this account and Site
+  before applying the limit. Preserves the site-map status and retry information for polling.
+  """
+  pageSpeedSuggestedPages(
+    siteId: Int!
+
+    "Maximum suggestions, default 15. Values outside 1 to 50 are clamped to that range."
+    limit: Int
+  ): SiteMapPagesResult!
+
   pageSpeedPageDuplicates(siteId: Int!, urls: [String!]!): [PageSpeedPageDuplicate!]!
 
   pageSpeedRuns(pageSpeedPageId: Int!): [PageSpeedRun!]!
