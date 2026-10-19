@@ -4890,12 +4890,21 @@ type Capabilities {
   teamSettings: CapabilityWithPermission!
   trackingOptions: CapabilityWithPermission!
   trafficAnalysis: CapabilityWithPermission!
-  webAnalytics: CapabilityWithPermission!
+  webAnalytics: CapabilityWebAnalytics!
 }
 
 "Base capability shape for product areas that only expose permission gates and no quota metadata."
 type CapabilityWithPermission {
   permissions: CapabilityPermission
+}
+
+type CapabilityWebAnalytics {
+  permissions: CapabilityPermission
+  quotas: CapabilityWebAnalyticsQuota!
+}
+
+type CapabilityWebAnalyticsQuota {
+  visibilityMonths: Int
 }
 
 """
