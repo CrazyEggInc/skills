@@ -9860,6 +9860,9 @@ type CapabilityPermission {
   "Specific to recordings"
   settings: CapabilityPermissionValue
 
+  "Specific to snapshots"
+  autoExport: CapabilityPermissionValue
+
   "Specific to addons"
   removeBranding: CapabilityPermissionValue
 
@@ -13913,6 +13916,19 @@ input CreateSnapshotsSettings {
   eligibility; defaults to false.
   """
   reoccurring: Boolean
+
+  """
+  Auto-export cadence; omission or null creates heatmaps that do not export themselves. A cadence
+  requires the `autoExport` snapshots permission, and AI-origin requests cannot set one.
+  """
+  autoExport: SnapshotAutoExport
+
+  """
+  Up to 10 addresses that receive each auto-export's download link; addresses differing only in case are
+  sent once. Omission or an empty list sends no email, and exports still reach the Exports list. AI-origin
+  requests must omit it, even as an empty list.
+  """
+  autoExportEmails: [String!]
 }
 
 """
@@ -14009,6 +14025,19 @@ input UpdateSnapshotParams {
   or `canUnsetReoccurring` before changing it.
   """
   reoccurring: Boolean
+
+  """
+  Omission keeps the stored cadence; null turns auto-export off. A new cadence, start, expiration or visit
+  limit restarts the schedule. Changing the cadence or addresses of a heatmap that auto-exports requires
+  the `autoExport` snapshots permission, and AI-origin requests can only turn it off.
+  """
+  autoExport: SnapshotAutoExport
+
+  """
+  Replacement list of up to 10 addresses; omission keeps the stored addresses. AI-origin requests must omit
+  it, including when they turn auto-export off.
+  """
+  autoExportEmails: [String!]
 }
 
 """
@@ -15465,6 +15494,12 @@ type Snapshot {
 
   "Saved creator name; null when no creator name is recorded."
   createdByName: String
+
+  "Auto-export cadence; null when the heatmap does not export itself."
+  autoExport: SnapshotAutoExport
+
+  "Addresses emailed each auto-export's download link; empty when exports only reach the Exports list."
+  autoExportEmails: [String!]
 }
 
 """
@@ -15603,6 +15638,36 @@ enum SnapshotRemoveElementsOption {
 
   "Plain CSS selector removal, when capture hides specified elements."
   REMOVE_ELEMENTS
+}
+
+"When a heatmap exports itself. Weekday cadences run at 08:00 UTC; `null` means never."
+enum SnapshotAutoExport {
+  "When the heatmap ends: it expires, reaches its visit limit or is paused."
+  ON_END
+
+  "Every Monday at 08:00 UTC while the heatmap runs."
+  MONDAY
+
+  "Every Tuesday at 08:00 UTC while the heatmap runs."
+  TUESDAY
+
+  "Every Wednesday at 08:00 UTC while the heatmap runs."
+  WEDNESDAY
+
+  "Every Thursday at 08:00 UTC while the heatmap runs."
+  THURSDAY
+
+  "Every Friday at 08:00 UTC while the heatmap runs."
+  FRIDAY
+
+  "Every Saturday at 08:00 UTC while the heatmap runs."
+  SATURDAY
+
+  "Every Sunday at 08:00 UTC while the heatmap runs."
+  SUNDAY
+
+  "Every 30 days from the heatmap's start while it runs."
+  EVERY_30_DAYS
 }
 
 "Share-link metadata returned by `sharedUrl`, `sharedUrls`, and share-link mutations."
