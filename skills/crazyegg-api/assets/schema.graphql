@@ -3566,7 +3566,7 @@ type RootMutationType {
 
   """
   Validates a page URL before `abTestCreate` or `abTestUpdate` and returns the site for its domain, the devices, and
-  login-redirect flags; it does not save a test. `INITIAL` never creates a site, while `TRANSITION` and `EDITOR_DONE`
+  site information; it does not save a test. `INITIAL` never creates a site, while `TRANSITION` and `EDITOR_DONE`
   create a missing site for the domain and regenerate the tracking script. Check `errors` first, then use the returned
   `siteId` as the test's `siteId`. Requires A/B testing edit access.
   """
@@ -15235,7 +15235,7 @@ input AbTestVariantWeightInput {
   weight: Float!
 }
 
-"Page validation returned by `abTestCheckPage`, including site selection and optional login-redirect information."
+"Page validation returned by `abTestCheckPage`, including site selection."
 type AbTestCheckPageResult {
   "Always DESKTOP, PHONE, and TABLET in the current check; device conflicts are not checked."
   devices: [SnapshotDevice!]
@@ -15255,14 +15255,11 @@ type AbTestCheckPageResult {
   "True when the caller should use the returned `siteId`; null when no site is selected or created."
   needToUpdateSiteId: Boolean
 
-  """
-  True when loading the URL redirects elsewhere to a path containing `login`, `sign_in`, or `signin`; null when the
-  check is skipped or fails.
-  """
-  isLoginPage: Boolean
+  "Legacy login-redirect result; null because login detection now runs in the browser."
+  isLoginPage: Boolean @deprecated(reason: "Login redirects are checked in the browser.")
 
-  "Final URL returned by login-redirect detection; null if detection fails or page validation has errors."
-  finalUrl: String
+  "Legacy final URL; null because login detection now runs in the browser."
+  finalUrl: String @deprecated(reason: "The browser proxy response supplies the final URL.")
 }
 
 "New draft id returned by `abTestDuplicate`; fetch its editor data with `abTestEditorDetail`."
