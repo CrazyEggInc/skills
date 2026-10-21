@@ -1653,7 +1653,7 @@ type RootQueryType {
   """
   Returns an editor with its pages and saved versions, or null when the editor does not exist. Updates the editor's
   last-opened time and assigns an unowned editor to the current account when the caller is signed in. Requires a page
-  editor token.
+  editor token or a logged-in user.
   """
   pageEditorGetEditor(
     "Editor UUID from `pageEditorCreatePage` or `pageEditorLatest`."
@@ -1663,7 +1663,7 @@ type RootQueryType {
   """
   Returns the requested capabilities of the account that owns an editor rather than the caller's. Returns null when
   the editor does not exist or has no owner yet; use `capabilities` for the caller's own account. Requires a page
-  editor token.
+  editor token for the editor, or a logged-in user who owns the editor or can edit the site of one of its pages.
   """
   pageEditorCapabilities(
     "Editor UUID from `pageEditorCreatePage` or `pageEditorLatest`."
@@ -1672,9 +1672,10 @@ type RootQueryType {
 
   """
   Returns an editor's brand guideline settings for one site as a JSON-encoded object with `checks`, `voices`,
-  `voiceTestContent`, and `profile`. Built-in checks and voices replace saved entries with the same `id` and are
-  added when missing, so a site with nothing saved still returns Crazy Egg defaults. Use
-  `pageEditorSaveBrandGuidelines` to replace the settings. Requires a page editor token.
+  `voiceTestContent`, and `profile`. Built-in checks and voices replace saved entries with the same `id` and are added
+  when missing, so a site with nothing saved still returns Crazy Egg defaults. Use `pageEditorSaveBrandGuidelines` to
+  replace the settings. Requires a page editor token for the editor, or a logged-in user who owns the editor or can
+  edit the site.
   """
   pageEditorGetBrandGuidelines(
     "Editor UUID from `pageEditorCreatePage` or `pageEditorLatest`."
@@ -4303,8 +4304,9 @@ type RootMutationType {
 
   """
   Checks whether a given user can publish a page or version, assigning an unowned editor to that user. Emails the
-  editor owner an access request when the user cannot publish, or sends the user a validation email when they can
-  and the caller is not signed in. Requires a page editor token.
+  editor owner an access request when the user cannot publish, or sends the user a validation email when they can and
+  the caller is not signed in. Requires a page editor token for the editor, or a logged-in user who owns the editor or
+  can edit the site of the page or version.
   """
   pageEditorValidateUser(
     "Version UUID from `pageEditorGetEditor`; required unless `pageId` is supplied and takes precedence over it."
@@ -4338,7 +4340,8 @@ type RootMutationType {
 
   """
   Replaces a page's saved editor history string and returns true, or false when the page does not exist. History is
-  separate from saved versions; use `pageEditorCreateVersion` to save changes. Requires a page editor token.
+  separate from saved versions; use `pageEditorCreateVersion` to save changes. Requires a page editor token for the
+  editor, or a logged-in user who owns the editor or can edit the page's site.
   """
   pageEditorUpdateHistory(
     "Page UUID from `pageEditorCreatePage` or `pageEditorGetEditor`."
@@ -4350,7 +4353,8 @@ type RootMutationType {
 
   """
   Saves a new unpublished version of a page and returns its UUID with thumbnail upload details. Publish it with
-  `publishVersion`; use `pageEditorUpdateVersion` to change a saved version. Requires a page editor token.
+  `publishVersion`; use `pageEditorUpdateVersion` to change a saved version. Requires a page editor token for the
+  editor, or a logged-in user who owns the editor or can edit the page's site.
   """
   pageEditorCreateVersion(
     "Page UUID from `pageEditorCreatePage` or `pageEditorGetEditor`."
@@ -4375,7 +4379,8 @@ type RootMutationType {
 
   """
   Overwrites a saved version's `patch`, `segment`, and `name`; omitted `segment` or `name` are cleared. Returns the
-  version UUID with thumbnail upload details and does not change publication. Requires a page editor token.
+  version UUID with thumbnail upload details and does not change publication. Requires a page editor token for the
+  editor, or a logged-in user who owns the editor or can edit the version's site.
   """
   pageEditorUpdateVersion(
     "Version UUID from `pageEditorGetEditor` or `pageEditorCreateVersion`."
@@ -4400,7 +4405,9 @@ type RootMutationType {
 
   """
   Adds a page to an existing editor, or creates a new editor for it when `editorId` is omitted. Returns the editor and
-  page UUIDs, a page editor token for the editor, and thumbnail upload details. Requires a page editor token.
+  page UUIDs, a page editor token for the editor, and thumbnail upload details. Requires a page editor token or a
+  logged-in user; with `editorId`, a token for that editor or a logged-in user who owns it or can edit the site of one
+  of its pages.
   """
   pageEditorCreatePage(
     "Editor UUID from `pageEditorCreatePage` or `pageEditorLatest`; omit to create a new editor."
@@ -4411,10 +4418,11 @@ type RootMutationType {
   ): PageEditorCreatePageResponse!
 
   """
-  Overwrites the brand guideline settings an editor stores for one site and returns true; read the current object
-  from `pageEditorGetBrandGuidelines` and save it whole. Built-in checks carry `id`, `name`, `note`, `updatedBy`,
+  Overwrites the brand guideline settings an editor stores for one site and returns true; read the current object from
+  `pageEditorGetBrandGuidelines` and save it whole. Built-in checks carry `id`, `name`, `note`, `updatedBy`,
   `condition`, `definition`, `example`, `testContent`, `enabled`, and `default`; voices carry `id`, `name`,
-  `updatedBy`, `color`, `definition`, `sample`, and `enabled`. Requires a page editor token.
+  `updatedBy`, `color`, `definition`, `sample`, and `enabled`. Requires a page editor token for the editor, or a
+  logged-in user who owns the editor or can edit the site.
   """
   pageEditorSaveBrandGuidelines(
     "Editor UUID from `pageEditorCreatePage` or `pageEditorLatest`."
@@ -4434,7 +4442,7 @@ type RootMutationType {
   """
   Records that a check is ignored for an element on a page by adding the element to that check's list in the page's
   `ignoredChecks`, skipping duplicates, and returns true. Use `pageEditorRemoveIgnoreCheck` to undo it. Requires a
-  page editor token.
+  page editor token for the editor, or a logged-in user who owns the editor or can edit the page's site.
   """
   pageEditorIgnoreCheck(
     "Page UUID from `pageEditorCreatePage` or `pageEditorGetEditor`."
@@ -4449,7 +4457,8 @@ type RootMutationType {
 
   """
   Removes an element from a check's list in the page's `ignoredChecks`, dropping the check key when its list becomes
-  empty, and returns true. Pass only an element currently ignored for that check. Requires a page editor token.
+  empty, and returns true. Pass only an element currently ignored for that check. Requires a page editor token for the
+  editor, or a logged-in user who owns the editor or can edit the page's site.
   """
   pageEditorRemoveIgnoreCheck(
     "Page UUID from `pageEditorCreatePage` or `pageEditorGetEditor`."
@@ -4464,7 +4473,8 @@ type RootMutationType {
 
   """
   Adds an element identifier to the page's `lockedElements`, skipping duplicates, and returns true. Use
-  `pageEditorUnlockElement` to remove the lock. Requires a page editor token.
+  `pageEditorUnlockElement` to remove the lock. Requires a page editor token for the editor, or a logged-in user who
+  owns the editor or can edit the page's site.
   """
   pageEditorLockElement(
     "Page UUID from `pageEditorCreatePage` or `pageEditorGetEditor`."
@@ -4476,7 +4486,8 @@ type RootMutationType {
 
   """
   Removes an element identifier from the page's `lockedElements` and returns true. Pass only an element that is
-  currently locked. Requires a page editor token.
+  currently locked. Requires a page editor token for the editor, or a logged-in user who owns the editor or can edit
+  the page's site.
   """
   pageEditorUnlockElement(
     "Page UUID from `pageEditorCreatePage` or `pageEditorGetEditor`."
