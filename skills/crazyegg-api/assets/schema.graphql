@@ -12947,7 +12947,7 @@ type Options {
 
   """
   Links that switch cookie-based blocking on and off for the visitor's own browser on one site.
-  Null when the account's tracking script would not honour them.
+  Null when the site is not visible to the account or its name has no usable host.
   """
   cookieBlockLinks("Site ID from `sites` for the cookie-blocking links." siteId: Int!): CookieBlockLinks
 }
