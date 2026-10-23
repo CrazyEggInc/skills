@@ -2289,8 +2289,9 @@ type RootQueryType {
   Returns pages of the Site's Spider site map and a `status` saying whether asking again will return more.
   Without `query` or `pageType` these are suggested pages, most important first; pass pages the user already
   added in `excludeUrls` to get the next ones. With `query` this is URL and title autocomplete. The first
-  request for an empty map runs a quick crawl (up to about 10 seconds) and queues a full crawl, so the answer
-  is partial: while `PENDING`, repeat every 10 to 30 seconds, backing off, until `READY`; on `UNAVAILABLE`,
+  request for an empty map runs a quick crawl (up to about 10 seconds), returns the pages the Site's
+  Recordings and Web Analytics already know, and queues a full crawl and their import, so the answer is
+  partial: while `PENDING`, repeat every 10 to 30 seconds, backing off, until `READY`; on `UNAVAILABLE`,
   retry after `retryAfterS` or stop when it is null. Pages seen only in Recordings, Web Analytics or Google
   Analytics imports are returned only to users who may view Recordings. Requires site access.
   """
@@ -2307,7 +2308,7 @@ type RootQueryType {
     "Only confidently classified pages of this type. Quick-crawl pages are unclassified and never match."
     pageType: SiteMapPageType
 
-    "Maximum number of pages, default 10. Values outside 1 to 50 are clamped to that range."
+    "Maximum number of pages, default 25. Values outside 1 to 50 are clamped to that range."
     limit: Int
 
     """
