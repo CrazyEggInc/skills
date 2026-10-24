@@ -9282,13 +9282,13 @@ type DashboardAddons {
   "Distinct survey response-group count in each window."
   totalResponses: DashboardMetricCompare!
 
-  "CTA click event count in each window."
+  "CTA click counters over inclusive UTC dates in each window, including paused but excluding deleted CTAs."
   totalClicks: DashboardMetricCompare!
 
   "Up to three active surveys by current-window response count descending."
   topSurveys: [SurveyStub]!
 
-  "Up to three active CTAs by current-window click count descending."
+  "Up to three published, active, non-deleted CTAs by click counters over inclusive current-window UTC dates."
   topCtas: [CtaStub]!
 }
 
@@ -9310,7 +9310,7 @@ type CtaStub {
 
   name: String!
 
-  "CTA click event count in the current window."
+  "CTA click counters over inclusive UTC dates in the current window."
   clicks: Int!
 }
 
