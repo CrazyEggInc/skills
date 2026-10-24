@@ -3620,6 +3620,21 @@ type RootMutationType {
   ): AbTest!
 
   """
+  Saves settings, notes, and all existing variants of a DRAFT test in one Core database transaction, using the
+  normal audience validation and synchronization. Re-runs the page check and validates supplied patches before
+  committing. Include every stored variant exactly once with its numeric id,
+  keeping the control first; this operation cannot add or remove variants. Non-drafts are rejected under a
+  row lock. Requires A/B testing edit access. Does not publish.
+  """
+  abTestSaveDraft(
+    "Existing draft test id from abTestEditorDetail or abTestCreate."
+    id: Int!
+
+    "Complete draft settings and every existing variant, including its id and intended patch or redirect."
+    args: AbTestCreateInput!
+  ): AbTest!
+
+  """
   Sets one variant's `description` on a DRAFT, RUNNING, or STOPPED test without changing its patch, redirect, or
   weight; use `abTestUpdateVariants` for other variant changes. The response is the updated variant record, so request
   only `id`, which is the variant id. Requires A/B testing edit access.
@@ -3636,7 +3651,7 @@ type RootMutationType {
   ): AbTest!
 
   """
-  Replaces the `notes` of a DRAFT, RUNNING, or STOPPED test; `notes` sent in create or update inputs only reach
+  Replaces the `notes` of a DRAFT, RUNNING, or STOPPED test; `notes` sent in legacy create or update inputs only reach
   `draft`. Request only stored fields such as `id`, `name`, and `status` in the response. Requires A/B testing edit
   access.
   """
@@ -15058,8 +15073,9 @@ input AbTestCreateInput {
   createSnapshots: Boolean
 
   """
-  Variants for `abTestCreate`; the first becomes the control and the rest become variants. Ignored by `abTestUpdate`
-  and `abTestUpdateDraft`.
+  Variants for `abTestCreate`; the first becomes the control and the rest become variants. On `abTestSaveDraft`,
+  include every existing variant exactly once with its numeric id and the original control first.
+  Ignored by `abTestUpdate` and `abTestUpdateDraft`.
   """
   variants: [AbTestVariantInput!]
 
@@ -15072,7 +15088,10 @@ input AbTestCreateInput {
   "How the page applies PATCH transforms; defaults to `async` when omitted on `abTestCreate` or `abTestUpdate`."
   patchStrategy: AbTestPatchStrategy
 
-  "Notes saved only inside draft metadata by these inputs; use `abTestUpdateNotes` for the test notes."
+  """
+  Notes saved on the test by `abTestSaveDraft`; other create/update inputs save them only in draft metadata.
+  Use `abTestUpdateNotes` to change notes independently.
+  """
   notes: String
 
   """
@@ -15176,13 +15195,14 @@ input GoalTriggerDraftParams {
 }
 
 """
-Variant settings for `abTestCreate`, `abTestAddVariants`, and `abTestUpdateVariants`. On create and add the position
+Variant settings for `abTestCreate`, `abTestAddVariants`, `abTestSaveDraft`, and `abTestUpdateVariants`.
+On create and add the position
 decides the role: the first variant of a test becomes CONTROL and later ones VARIANT, whatever `type` says.
 """
 input AbTestVariantInput {
   """
-  Variant id from `abTestEditorDetail` or `abTestRefList`; required by `abTestUpdateVariants`, omitted on create and
-  add.
+  Variant id from `abTestEditorDetail` or `abTestRefList`; required by `abTestSaveDraft` and `abTestUpdateVariants`,
+  omitted on create and add.
   """
   id: Int
 
@@ -15207,7 +15227,7 @@ input AbTestVariantInput {
 
   """
   Traffic percentage, truncated to tenths; no bounds or total-of-100 check. Omission in `abTestUpdateVariants`
-  clears the weight.
+  clears the weight; omission in `abTestSaveDraft` preserves it.
   """
   weight: Float
 
