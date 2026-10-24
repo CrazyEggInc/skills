@@ -9146,8 +9146,6 @@ so clients can introspect which metrics are comparative pairs, static counts, or
 lookups.
 """
 type Dashboard {
-  visitors: DashboardVisitors!
-
   goals: DashboardGoals!
 
   snapshots: DashboardSnapshots!
@@ -9160,21 +9158,6 @@ type Dashboard {
 
   "Currently an empty list."
   suggestions: [DashboardSuggestion]!
-}
-
-"""
-Visitor summary metrics where each value is keyed as `current` and `previous` using the two time
-windows supplied to the top-level query.
-"""
-type DashboardVisitors {
-  "Rounded daily visitor count averaged over dates with visitor data."
-  avgDailyUniqueVisitors: DashboardMetricCompare!
-
-  "Rounded mean recording duration in seconds; zero when no recordings match."
-  avgVisitDuration: DashboardMetricCompare!
-
-  "Rounded mean visited-page count per recording; zero when no recordings match."
-  avgPages: DashboardMetricCompare!
 }
 
 """
