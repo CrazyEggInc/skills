@@ -2238,6 +2238,20 @@ type RootQueryType {
   ): SharedUrlListResults
 
   """
+  Returns one stored preview image per requested page of a site, in request order. URLs are canonicalized on the
+  server. Sources: the Spider screenshot (the site's private one only with Recordings-view access), then the newest
+  processed Snapshot thumbnail for the device. Image URLs are presigned and expire after 15 minutes. Requires access
+  to the site; accepts at most 100 requests.
+  """
+  pageThumbnails(
+    "Site whose pages to look up."
+    siteId: ID!
+
+    "Pages to look up."
+    requests: [PageThumbnailRequest!]!
+  ): [PageThumbnail!]!
+
+  """
   Returns all accessible sites sorted by case-insensitive name and then ID, including tracking and recording
   settings. Use the feature-specific site queries for dashboard counts. Requires a logged-in session; shared
   sessions are allowed and receive reduced details.
@@ -6304,6 +6318,54 @@ input ThumbnailRequest {
 type ThumbnailResult {
   url: String!
   thumbnailUrl: String!
+}
+
+"A page whose preview image to look up."
+input PageThumbnailRequest {
+  "Page URL."
+  url: String!
+
+  "Preview device."
+  device: PageThumbnailDevice!
+}
+
+"The preview image of a requested page."
+type PageThumbnail {
+  "Page URL as requested."
+  url: String!
+
+  "Preview device as requested."
+  device: PageThumbnailDevice!
+
+  "Preview availability."
+  status: PageThumbnailStatus!
+
+  "Presigned image URL for list previews when ready."
+  imageUrl: String
+
+  "Presigned viewport-sized image URL when one is stored; otherwise null."
+  largeImageUrl: String
+}
+
+"Device for a page thumbnail."
+enum PageThumbnailDevice {
+  "Desktop preview."
+  DESKTOP
+
+  "Mobile preview."
+  MOBILE
+}
+
+"Availability of a page thumbnail."
+enum PageThumbnailStatus {
+  "A stored image is available."
+  READY
+
+  "The browser should capture the page. Not returned yet."
+  CAPTURE
+
+  "No image is available; show a placeholder."
+  UNAVAILABLE
 }
 
 "Paginated shared-link results keyed as `meta` plus `shared_urls`, rather than a bare list."
