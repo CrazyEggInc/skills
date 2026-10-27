@@ -2238,10 +2238,12 @@ type RootQueryType {
   ): SharedUrlListResults
 
   """
-  Returns one stored preview image per requested page of a site, in request order. URLs are canonicalized on the
-  server. Sources: the Spider screenshot (the site's private one only with Recordings-view access), then the newest
-  processed Snapshot thumbnail for the device. Image URLs are presigned and expire after 15 minutes. Requires access
-  to the site; accepts at most 100 requests.
+  Returns one preview per requested page of a site, in request order. URLs are canonicalized on the server.
+  Sources: the Spider screenshot (the site's private one only with Recordings-view access), the site's browser
+  capture of the page, then the newest processed Snapshot thumbnail for the device. Otherwise an interactive
+  session gets status CAPTURE with a capture ticket for pages on the site's domain, unless a capture of the page
+  failed in the last 24 hours. Image URLs are presigned and expire after 15 minutes. Requires access to the site;
+  accepts at most 100 requests.
   """
   pageThumbnails(
     "Site whose pages to look up."
@@ -2845,6 +2847,27 @@ type RootMutationType {
     "Share-link record ids from `sharedUrls` or `sharedUrl`; inaccessible ids are skipped."
     ids: [Int!]!
   ): [SharedUrlResult]
+
+  """
+  Stores the two images uploaded for a capture ticket from pageThumbnails as the site's browser capture of the
+  page and returns its READY thumbnail. Both must be JPEGs of the device's sizes. The ticket is used up even when
+  the images are rejected; look the page up again for a new one. Requires an interactive session of the account
+  the ticket was issued to.
+  """
+  commitPageThumbnail("Token of the capture ticket." token: String!): PageThumbnail!
+
+  """
+  Records that a capture failed, deletes its uploads and returns the page's stored thumbnail, if any. No new
+  ticket is issued for the page and device for 24 hours. Requires an interactive session of the account the
+  ticket was issued to.
+  """
+  failPageThumbnail(
+    "Token of the capture ticket."
+    token: String!
+
+    "Why the capture failed, as the capture page reported it."
+    reason: PageThumbnailFailureReason!
+  ): PageThumbnail!
 
   """
   Creates a site using the lowercased registrable domain of the URL, enabling session recording and refreshing
@@ -6349,6 +6372,99 @@ type PageThumbnail {
 
   "Presigned viewport-sized image URL when one is stored; otherwise null."
   largeImageUrl: String
+
+  """
+  Capture ticket when status is CAPTURE, or when a READY browser capture is older than 7 days and may be
+  captured again; otherwise null. Not available to AI clients.
+  """
+  capture: PageThumbnailCapture
+}
+
+"""
+A ticket to capture one page in the browser: render the source, upload both images with their policies, then call
+commitPageThumbnail or failPageThumbnail with the token.
+"""
+type PageThumbnailCapture {
+  "Opaque ticket for commitPageThumbnail or failPageThumbnail; usable once."
+  token: String!
+
+  "When the ticket and its upload policies expire, in Unix seconds."
+  expiresAt: Int!
+
+  "What to render."
+  source: PageThumbnailSource!
+
+  "Where to upload the two images."
+  uploads: PageThumbnailUploads!
+
+  "JWT for the Interagent proxy that renders the source."
+  interagentJwt: InteragentJwt!
+}
+
+"The page a capture ticket renders."
+type PageThumbnailSource {
+  "Kind of source."
+  type: PageThumbnailSourceType!
+
+  "Canonical URL of the page."
+  url: String!
+}
+
+"Kind of page a capture renders."
+enum PageThumbnailSourceType {
+  "The live page, loaded through the proxy."
+  LIVE
+}
+
+"Upload policies for the two JPEGs of a capture."
+type PageThumbnailUploads {
+  "320 px wide JPEG of the viewport."
+  thumbnail: PageThumbnailUpload!
+
+  "Viewport-sized JPEG."
+  full: PageThumbnailUpload!
+}
+
+"An S3 presigned POST: send every field in order as multipart form data, then the image as `file`."
+type PageThumbnailUpload {
+  "Form action URL."
+  url: String!
+
+  "Form fields to send before the file, in order."
+  fields: [PageThumbnailUploadField!]!
+}
+
+"One form field of an upload policy."
+type PageThumbnailUploadField {
+  "Field name."
+  name: String!
+
+  "Field value."
+  value: String!
+}
+
+"Why a page capture failed, as the capture page reports it."
+enum PageThumbnailFailureReason {
+  "The capture page rejected the job."
+  INVALID_JOB
+
+  "The capture page already ran a job."
+  BUSY
+
+  "The capture proxy could not start."
+  PROXY_UNAVAILABLE
+
+  "The page could not be loaded."
+  LOAD_FAILED
+
+  "The capture did not finish in time."
+  TIMEOUT
+
+  "The page could not be rendered to an image."
+  RENDER_FAILED
+
+  "An image upload failed."
+  UPLOAD_FAILED
 }
 
 "Device for a page thumbnail."
@@ -6365,7 +6481,7 @@ enum PageThumbnailStatus {
   "A stored image is available."
   READY
 
-  "The browser should capture the page. Not returned yet."
+  "No image is stored; capture the page with the ticket in `capture`."
   CAPTURE
 
   "No image is available; show a placeholder."
