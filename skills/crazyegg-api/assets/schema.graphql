@@ -2302,7 +2302,9 @@ type RootQueryType {
   """
   Returns pages of the Site's Spider site map and a `status` saying whether asking again will return more.
   Without `query` or `pageType` these are suggested pages, most important first; pass pages the user already
-  added in `excludeUrls` to get the next ones. With `query` this is URL and title autocomplete. The first
+  added in `excludeUrls` to get the next ones. With `query` this is URL and title autocomplete, best match
+  first: an exact path segment before a word or substring of the path, the path before the title,
+  tolerating typos; importance only orders pages that match equally well. The first
   request for an empty map runs a quick crawl (up to about 10 seconds), returns the pages the Site's
   Recordings and Web Analytics already know, and queues a full crawl and their import, so the answer is
   partial: while `PENDING`, repeat every 10 to 30 seconds, backing off, until `READY`; on `UNAVAILABLE`,
@@ -2315,7 +2317,9 @@ type RootQueryType {
 
     """
     Autocomplete text, at most 200 characters, matched case-insensitively
-    against the full URL and the page title.
+    against the URL and the page title. Every word must match; words of 4 or
+    more letters also match with a typo. A path (`/pricing`) or a URL with a
+    host (`example.com/pricing`) matches that path and the pages under it.
     """
     query: String
 
