@@ -2859,9 +2859,10 @@ type RootMutationType {
   commitPageThumbnail("Token of the capture ticket." token: String!): PageThumbnail!
 
   """
-  Records that a capture failed, deletes its uploads and returns the page's stored thumbnail, if any. No new
-  ticket is issued for the page and device for 24 hours. Requires an interactive session of the account the
-  ticket was issued to.
+  Records that a capture failed, deletes its uploads and returns the page as a new lookup would: its stored
+  thumbnail, if any, and no new ticket for the page and device for 24 hours. A REDIRECTED failure can instead
+  switch the page to its recordings; the result then carries a RECORDING capture ticket for sessions that may view
+  recordings. Requires an interactive session of the account the ticket was issued to.
   """
   failPageThumbnail(
     "Token of the capture ticket."
@@ -6430,12 +6431,24 @@ type PageThumbnailSource {
   the site and is not captured.
   """
   siteDomain: String!
+
+  """
+  For RECORDING, the page rebuilt from its newest recording, with scripts, embedded documents, form values and
+  censored content removed; render it as the document at `url`. Null for LIVE.
+  """
+  html: String
 }
 
 "Kind of page a capture renders."
 enum PageThumbnailSourceType {
   "The live page, loaded through the proxy."
   LIVE
+
+  """
+  The page as recorded, for a page whose live version ends on a sign-in page or off the site. Issued only to
+  sessions that may view recordings.
+  """
+  RECORDING
 }
 
 "Upload policies for the two JPEGs of a capture."
