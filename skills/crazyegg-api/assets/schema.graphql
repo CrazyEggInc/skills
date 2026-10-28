@@ -2286,13 +2286,15 @@ type RootQueryType {
   sitesForAddons: [SiteForAddons!]
 
   """
-  Generates thumbnail URLs for page requests in input order without saving site or snapshot records. Use these
-  URLs to request page previews rather than creating a snapshot. Requires a logged-in session.
+  Deprecated: use `pageThumbnails`. Returns the stored desktop preview image of each requested page, from the
+  accessible site whose registrable domain is the URL's, as `pageThumbnails` would without a capture. Never
+  captures a page and never saves site or snapshot records. Requires a logged-in session.
   """
   thumbnails(
-    "Page URLs and thumbnail options; one result is returned for each request in the same order."
+    "At most 100 page URLs; one result is returned for each request in the same order."
     requests: [ThumbnailRequest!]!
   ): [ThumbnailResult]
+    @deprecated(reason: "Use pageThumbnails; thumbnailUrl is an empty string when no stored image exists.")
 
   """
   Returns one accessible site by ID, including its tracking and recording settings when available. Missing or
@@ -6323,27 +6325,32 @@ enum SamplingType {
   STATIC
 }
 
-"One page-preview request for thumbnails; options are passed through to the thumbnail service."
+"One page-preview request for the deprecated thumbnails query. Only `url` is used."
 input ThumbnailRequest {
-  "Page URL to render."
+  "Page URL to look up."
   url: String!
 
-  "Viewport string passed unchanged to the thumbnail service."
+  "Ignored."
   viewport: String
 
-  "Maximum thumbnail width in pixels."
+  "Ignored."
   thumbnailMaxWidth: Int
 
-  "Whether to request a full-page image."
+  "Ignored."
   fullpage: Boolean
 
-  "Integer unique parameter passed unchanged to the thumbnail service."
+  "Ignored."
   unique: Int
 }
 
-"Input page URL paired with a generated thumbnail URL returned by thumbnails."
+"Input page URL paired with its stored preview image, returned by the deprecated thumbnails query."
 type ThumbnailResult {
   url: String!
+
+  """
+  Presigned URL of the stored preview image, valid for at least 15 minutes, or an empty string when the page has
+  none.
+  """
   thumbnailUrl: String!
 }
 
@@ -7099,8 +7106,7 @@ type RecordingPermissions {
 }
 
 """
-Cursor-paged normalized page groups with counts and thumbnails derived from a representative URL
-for each group.
+Cursor-paged normalized page groups with counts and a representative URL for each group.
 Returned by `recordingsGroups`.
 """
 type RecordingsGroupsMeta {
@@ -7128,8 +7134,11 @@ type RecordingGroup {
   "Representative group URL with query and fragment removed."
   url: String!
 
-  "Thumbnail URL generated from the representative group URL."
-  thumbnail: String!
+  """
+  Presigned URL of the stored desktop preview image of the representative group URL, as `pageThumbnails` returns
+  it without a capture, or null when there is none.
+  """
+  thumbnail: String @deprecated(reason: "Use pageThumbnails with the group url.")
 
   "Number of matching recordings in this page group."
   recordingsCount: Int
