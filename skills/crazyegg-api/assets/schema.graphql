@@ -3196,7 +3196,42 @@ type RootMutationType {
 
     "Optional email address that receives the finished export."
     destinationEmail: String
+
+    """
+    Snapshot to export side by side with the single snapshot in `snapshotIds`, as the report's compare mode
+    does. Only `HEATMAP`, `SCROLLMAP` and `CONFETTI` views are drawn for a comparison.
+    """
+    compareSnapshotId: Int
+
+    """
+    JSON object of report filters to apply to the export, as the report's event filter builds them, for
+    example `{"beginTime":1790000000,"endTime":1790600000}`. Omit it to export all data.
+    """
+    filter: String
   ): Affected
+
+  """
+  Sets only the auto-export cadence and recipients on several snapshots, leaving their other settings alone,
+  and returns the changed IDs or validation errors. Snapshots the session cannot edit are skipped. Turning
+  auto-export on or changing its recipients requires the `autoExport` snapshots permission; AI-origin requests
+  can only turn it off. Requires snapshot edit access.
+  """
+  updateSnapshotsAutoExport(
+    "Snapshot IDs from `snapshotsList` or `snapshots`."
+    snapshotIds: [Int!]!
+
+    """
+    Cadence for every snapshot; null turns auto-export off and omission keeps each stored cadence. A new
+    cadence restarts the schedule.
+    """
+    autoExport: SnapshotAutoExport
+
+    """
+    Replacement list of up to 10 addresses for every snapshot; omission keeps each stored list. AI-origin
+    requests must omit it.
+    """
+    autoExportEmails: [String!]
+  ): UpdateSnapshotsAutoExportResults
 
   """
   Renames one editable snapshot and refreshes the tracking script, returning the saved record. Named matching
@@ -13973,6 +14008,15 @@ type UpdateSnapshotResults {
   snapshot: CreateSnapshotsResult
 
   "Validation failures; null on success."
+  errors: CreateSnapshotsErrors
+}
+
+"Result of `updateSnapshotsAutoExport`: the changed IDs, or the shared validation errors when nothing was saved."
+type UpdateSnapshotsAutoExportResults {
+  "IDs whose auto-export was saved; empty when validation fails or none could be edited."
+  affected: [Int!]!
+
+  "Address errors in `settings` for `autoExportEmails`: `invalid_email` or `too_many`. Null on success."
   errors: CreateSnapshotsErrors
 }
 
