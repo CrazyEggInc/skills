@@ -2869,6 +2869,12 @@ type RootMutationType {
 
     "Why the capture failed, as the capture page reported it."
     reason: PageThumbnailFailureReason!
+
+    """
+    For `REDIRECTED`, the URL the page ended on, as the capture page reported it. Kept only when it is an
+    absolute HTTP(S) URL of at most 2048 characters; ignored for other reasons.
+    """
+    finalUrl: String
   ): PageThumbnail!
 
   """
@@ -6418,6 +6424,12 @@ type PageThumbnailSource {
 
   "Canonical URL of the page."
   url: String!
+
+  """
+  The site's domain as an ASCII host. A page that ends on another host than this one or its subdomains is off
+  the site and is not captured.
+  """
+  siteDomain: String!
 }
 
 "Kind of page a capture renders."
@@ -6475,6 +6487,9 @@ enum PageThumbnailFailureReason {
 
   "An image upload failed."
   UPLOAD_FAILED
+
+  "The page ended off the site or on a sign-in page."
+  REDIRECTED
 }
 
 "Device for a page thumbnail."
