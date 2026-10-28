@@ -3854,7 +3854,10 @@ type RootMutationType {
   Creates a pending site-data export request for a UTC-midnight window of at most 90 days. Generation runs
   asynchronously and a completion notification is attempted at `notificationEmail`; use `aiExport` to check status
   and obtain the completed download. Requires a logged-in session, export availability, site access, and view
-  access to every selected feature; web analytics must be within available history.
+  access to every selected feature; web analytics must be within available history. At most three AI Export
+  requests may be created per account in a rolling 24-hour window across all sites and team members. Accepted
+  requests count regardless of generation status; worker retries do not consume another request. Exceeding the
+  limit returns RATE_LIMITED with an extensions.retry_at UTC timestamp for the next available request.
   """
   createAiExport(
     "Site, UTC-midnight window, distinct supported features, and completion-notification email."
