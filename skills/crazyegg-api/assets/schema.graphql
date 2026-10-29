@@ -2347,6 +2347,23 @@ type RootQueryType {
   ): SiteMapPagesResult!
 
   """
+  Suggests site-map pages in importance order, excluding source URLs captured by active, unexpired Heatmaps
+  below their visit limit, including scheduled captures. Exclusions apply before the limit and use sitemap
+  URL canonicalization. Stopped, expired, visit-limit-reached, and deleted Heatmaps do not exclude pages.
+  Requires Heatmap edit access and editable access to the site.
+  """
+  snapshotSuggestedPages(
+    "Site ID from `sites`."
+    siteId: Int!
+
+    "Maximum suggestions, clamped to 1–50; defaults to 15."
+    limit: Int
+
+    "Up to 200 additional URLs to omit, such as pages already entered in the creation wizard."
+    excludeUrls: [String!]
+  ): SiteMapPagesResult!
+
+  """
   Returns a cursor-paged list of accessible snapshots in the requested order, defaulting to start time
   ascending. Use `snapshots` for numbered pages and counts, or `snapshot` for one ID. Pass `nextPageCursor` to
   exclude previously returned IDs; `hasNextPage` only indicates a full page. Requires snapshot view access.
