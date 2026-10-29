@@ -172,7 +172,8 @@ type RootQueryType {
   """
   Returns one accessible site export and its current generation and notification status. Use `aiExports` for
   recent requests or read this operation again after creation; the download URL is null until completion and after
-  expiry. Requires a logged-in session, site access, and view access to every included feature; missing or
+  expiry. Requires a logged-in session, JSON export access or the export-everything override, site access,
+  and view access to every included feature; missing or
   inaccessible exports return an error.
   """
   aiExport(
@@ -187,7 +188,8 @@ type RootQueryType {
   Returns accessible exports from the site's latest 100 requests, ordered by creation time then ID descending.
   Requests containing features the caller cannot view are omitted after the limit; there is no cursor. Use
   `aiExport` to inspect one request and its download availability. Requires a logged-in session, export
-  availability, site access, and view access to included features.
+  availability through JSON export access or the export-everything override, site access, and view access to
+  included features.
   """
   aiExports("Site ID from `sites` whose recent export requests to list." siteId: Int!): [AiExport!]!
 
@@ -3896,7 +3898,8 @@ type RootMutationType {
   Creates a pending site-data export request for a UTC-midnight window of at most 90 days. Generation runs
   asynchronously and a completion notification is attempted at `notificationEmail`; use `aiExport` to check status
   and obtain the completed download. Requires a logged-in session, export availability, site access, and view
-  access to every selected feature; web analytics must be within available history. At most three AI Export
+  access to every selected feature; web analytics must be within available history. Export availability requires
+  JSON export access or the export-everything override. At most three AI Export
   requests may be created per account in a rolling 24-hour window across all sites and team members. Accepted
   requests count regardless of generation status; worker retries do not consume another request. Exceeding the
   limit returns RATE_LIMITED with an extensions.retry_at UTC timestamp for the next available request.
