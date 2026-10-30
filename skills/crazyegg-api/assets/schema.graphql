@@ -2348,8 +2348,9 @@ type RootQueryType {
 
   """
   Suggests site-map pages in importance order, excluding source URLs captured by active, unexpired Heatmaps
-  below their visit limit, including scheduled captures. Exclusions apply before the limit and use sitemap
-  URL canonicalization. Stopped, expired, visit-limit-reached, and deleted Heatmaps do not exclude pages.
+  below their visit limit, including scheduled captures, and completed recurring Heatmaps awaiting a successor.
+  Exclusions apply before the limit and use sitemap URL canonicalization. Other completed, stopped, and deleted
+  Heatmaps do not exclude pages.
   Requires Heatmap edit access and editable access to the site.
   """
   snapshotSuggestedPages(
