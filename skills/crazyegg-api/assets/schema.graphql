@@ -13620,6 +13620,13 @@ type AbTestVariant {
   "Signed variant screenshot URL; null if no variant id or asset path can be built."
   screenshotUrl: String
 
+  """
+  Predicted lift range from past tests of the same kind of change (the A/B test pattern
+  library); null for controls, redirect tests, and accounts without the `ab-test-prediction`
+  feature. An estimate shown before and during a test, never a measured result.
+  """
+  prediction: AbTestVariantPrediction
+
   "Computed metrics; null when metrics were not loaded, including editor and result detail queries."
   results: AbTestVariantResult
 
@@ -13758,6 +13765,49 @@ enum AbTestStatus {
 
   "Soft-deleted test; returned after deletion but does not select deleted tests in list filters."
   DELETED
+}
+
+"""
+Predicted lift range of a variant from past tests of the same kind of change (the A/B test
+pattern library); an estimate, never a measured result.
+"""
+type AbTestVariantPrediction {
+  state: AbTestVariantPredictionState!
+
+  "Lower end of the 90% range of relative lift, as a fraction (-0.061 is -6.1%)."
+  liftLow: Float
+
+  "Upper end of the 90% range, as a fraction."
+  liftHigh: Float
+
+  "Median observed lift of the similar tests."
+  liftMedian: Float
+
+  "Similar past tests the range is built on."
+  basisTests: Int
+
+  "Accounts those tests came from."
+  basisAccounts: Int
+
+  "Specificity of the match: 1 is the most specific kind of change, 6 is every on-page test."
+  basisLevel: Int
+
+  modelVersion: String
+
+  "Unix seconds of the last state change."
+  updatedAt: Int
+}
+
+"Lifecycle of a predicted lift range."
+enum AbTestVariantPredictionState {
+  "Being computed; poll again in a few seconds."
+  PENDING
+
+  "A range is available."
+  READY
+
+  "No range applies to this variant."
+  UNAVAILABLE
 }
 
 "Variant role or stored patch kind used by test queries and variant inputs."
