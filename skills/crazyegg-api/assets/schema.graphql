@@ -13326,6 +13326,9 @@ type SubscriptionProduct {
 
   "Recurring amount in decimal billing currency units; the currency code is not returned."
   amount: Float
+
+  "Unit of the product's own billing interval, which can differ from the plan's."
+  intervalType: SubscriptionIntervalType
 }
 
 """
