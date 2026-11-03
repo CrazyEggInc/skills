@@ -9956,6 +9956,7 @@ type Capabilities {
   liveActivity: CapabilityWithPermission!
   notifications: CapabilityWithPermission!
   pageSpeed: CapabilityPageSpeed!
+  personalizationCampaigns: CapabilityWithPermission!
   recordings: CapabilityRecording!
   sharing: CapabilityWithPermission!
   siteSettings: CapabilityWithPermission!
