@@ -10060,13 +10060,20 @@ type CapabilitySnapshot {
   quotas: CapabilitySnapshotQuota
 }
 
-"Heatmap count and visits-per-Heatmap allowances returned in `capabilities.snapshots`."
+"Heatmap count, visits-per-Heatmap and monthly visit allowances returned in `capabilities.snapshots`."
 type CapabilitySnapshotQuota {
   "Heatmap count limit and current count."
   totalSnapshots: CapabilityQuota
 
   "Maximum visits per Heatmap; current usage is not reported."
   visitsPerSnapshot: CapabilityQuota
+
+  """
+  Heatmap visits this month, including adjustments, and the account's effective monthly visit limit: the
+  subscription's own limit when set, otherwise the plan's. A null limit means no visit limit: unlimited, or a
+  bundled plan, which meters page views (`capabilities.account.quotas.monthlyPageViews`) instead.
+  """
+  monthlyVisits: CapabilityQuota
 }
 
 "Page Speed permissions and monitored-page limits returned by `capabilities`."
