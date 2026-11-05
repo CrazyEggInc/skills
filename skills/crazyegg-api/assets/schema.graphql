@@ -5,6 +5,9 @@ schema {
 }
 
 type RootQueryType {
+  "Returns an accessible, non-deleted campaign in any state. Requires Personalization view access."
+  personalizationCampaignDetail("Saved Personalization campaign ID." id: Int!): PersonalizationCampaign
+
   """
   Returns a cursor-paginated page of non-deleted tests with all-time results for each test's primary goal. Without
   `order`, tests come newest id first; pass `nextPageCursor` back as `cursor` for the next page. Use `abTestRefList`
@@ -2622,6 +2625,21 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Creates a draft with a valid name and accessible site. Requires Personalization edit access."
+  personalizationCampaignCreateDraft(
+    "Initial draft configuration."
+    args: PersonalizationCampaignCreateDraftInput!
+  ): PersonalizationCampaign!
+
+  "Updates an accessible draft without changing its site. Requires Personalization edit access."
+  personalizationCampaignUpdateDraft(
+    "Saved draft campaign ID."
+    id: Int!
+
+    "Draft configuration to save."
+    args: PersonalizationCampaignUpdateDraftInput!
+  ): PersonalizationCampaign!
+
   """
   Records one to four views or clicks of guided task recommendations for the caller and returns how many were
   stored. Each event saves the recommendation details carried by its token (guided task, recommendation, position,
@@ -14593,6 +14611,21 @@ input SharedUrlUpdateParams {
   note: String
 }
 
+"Configuration required to create a campaign draft; other campaign sections may be added later."
+input PersonalizationCampaignCreateDraftInput {
+  "Nonblank campaign name, at most 255 characters."
+  name: String!
+
+  "Accessible site ID from sites; immutable after saving."
+  siteId: Int!
+}
+
+"Configuration to update a saved campaign draft. The campaign's site cannot be changed."
+input PersonalizationCampaignUpdateDraftInput {
+  "Nonblank campaign name, at most 255 characters."
+  name: String!
+}
+
 """
 Custom playlist parameters for `savePlaylist`; the saved filter selects matching recordings dynamically rather than
 storing recording ids.
@@ -16172,6 +16205,21 @@ enum SharedUrlStatus {
 
   "Public lookup disabled, while retaining the saved share link."
   DISABLED
+}
+
+"A saved Personalization campaign. Its site cannot change after creation."
+type PersonalizationCampaign {
+  "Saved campaign ID."
+  id: Int!
+
+  "Campaign display name."
+  name: String!
+
+  "The campaign's immutable site ID."
+  siteId: Int!
+
+  "Display name of the campaign's site."
+  siteName: String!
 }
 
 """
