@@ -9993,7 +9993,7 @@ type Capabilities {
   sites: CapabilitySite!
   snapshots: CapabilitySnapshot!
   sso: CapabilityWithPermission!
-  surveys: CapabilityWithPermission!
+  surveys: CapabilitySurvey!
   tasks: CapabilityWithPermission!
   teamSettings: CapabilityWithPermission!
   trackingOptions: CapabilityWithPermission!
@@ -10019,6 +10019,23 @@ type CapabilityWebAnalytics {
 type CapabilityWebAnalyticsQuota {
   "Historical data visibility in months, as configured by the subscription."
   visibilityMonths: Int
+}
+
+"Survey permissions and response allowance returned by `capabilities`."
+type CapabilitySurvey {
+  "Action-specific permission decisions; actions absent from this product area resolve to null."
+  permissions: CapabilityPermission
+
+  quotas: CapabilitySurveyQuota!
+}
+
+"Monthly survey response allowance returned in `capabilities.surveys`."
+type CapabilitySurveyQuota {
+  """
+  Responses collected across all surveys this calendar month (UTC) and the monthly limit; a null limit
+  means unlimited. `current` can exceed `limit`.
+  """
+  monthlyResponses: CapabilityQuota
 }
 
 """
@@ -10209,6 +10226,18 @@ type CapabilityPermission {
 
   "Specific to AI"
   summarize: CapabilityPermissionValue
+
+  "Specific to AI: Model Context Protocol access"
+  mcp: CapabilityPermissionValue
+
+  "Specific to API: creating and using personal access tokens"
+  personalAccessToken: CapabilityPermissionValue
+
+  "Specific to surveys: saving questions with branching logic"
+  branchingLogic: CapabilityPermissionValue
+
+  "Specific to surveys: showing a survey on user behavior instead of on page load or after a delay"
+  showOnUserBehavior: CapabilityPermissionValue
 
   "Specific to account"
   delete: CapabilityPermissionValue
