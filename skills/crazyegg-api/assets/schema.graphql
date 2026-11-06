@@ -13697,7 +13697,13 @@ type AbTestVariant {
   library); null for controls, redirect tests, and accounts without the `ab-test-prediction`
   feature. An estimate shown before and during a test, never a measured result.
   """
-  prediction: AbTestVariantPrediction
+  prediction(
+    """
+    Goal id from `goalRefList` to read the page's conversion rate for, when it is not the test's saved goal
+    yet (the creation wizard picks the goal before saving); defaults to the test's goal.
+    """
+    goalId: Int
+  ): AbTestVariantPrediction
 
   "Computed metrics; null when metrics were not loaded, including editor and result detail queries."
   results: AbTestVariantResult
@@ -13855,6 +13861,12 @@ type AbTestVariantPrediction {
   "Median observed lift of the similar tests."
   liftMedian: Float
 
+  "Lower end of the likely range, the middle 50% of the similar tests, as a fraction."
+  likelyLow: Float
+
+  "Upper end of the likely range, as a fraction."
+  likelyHigh: Float
+
   "Similar past tests the range is built on."
   basisTests: Int
 
@@ -13864,10 +13876,58 @@ type AbTestVariantPrediction {
   "Specificity of the match: 1 is the most specific kind of change, 6 is every on-page test."
   basisLevel: Int
 
+  "Where the page's traffic figures come from; null when nothing is known about its traffic."
+  trafficSource: AbTestPredictionTrafficSource
+
+  """
+  Visitors each variation can expect over two weeks: the page's recent traffic split evenly between the test's
+  live variants, control included. Null without traffic figures.
+  """
+  visitorsPerVariation: Int
+
+  "Share of the page's visitors who converted on the goal (`goalId`, else the test's), as a fraction; null when unknown."
+  baselineConversionRate: Float
+
+  """
+  Smallest relative change a two-week test on this page can detect at 95% confidence and 80% power, as a fraction
+  (0.13 is 13%). Null without traffic figures and a conversion rate.
+  """
+  detectableLift: Float
+
+  "What the test can be expected to detect; null unless `state` is READY."
+  guidance: AbTestPredictionGuidance
+
   modelVersion: String
 
   "Unix seconds of the last state change."
   updatedAt: Int
+}
+
+"Source of the traffic figures behind a predicted lift range's guidance."
+enum AbTestPredictionTrafficSource {
+  "Web Analytics: unique visitors of the test's page over the last 14 days."
+  WEB_ANALYTICS
+
+  "The site's most recent measured A/B test."
+  PAST_TESTS
+}
+
+"What a two-week test on the page can be expected to detect, derived from its traffic."
+enum AbTestPredictionGuidance {
+  "The test can detect changes of the size similar tests often show, so a clear result is likely."
+  CLEAR_RESULT_LIKELY
+
+  "The test can only detect larger changes than similar tests usually show; plan a longer run."
+  CHANGES_USUALLY_SMALLER
+
+  "The page gets too little traffic: the test could only detect a change above 50%."
+  NOT_ENOUGH_TRAFFIC
+
+  "Visitors per variation are known but no conversion rate, so no detectable change can be given."
+  TRAFFIC_ONLY
+
+  "Nothing is known about the page's traffic."
+  NO_TRAFFIC
 }
 
 "Lifecycle of a predicted lift range."
