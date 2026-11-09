@@ -173,6 +173,13 @@ type RootQueryType {
   ): AbTestStatusCountsResult!
 
   """
+  The held-back change behind an emailed confirmation link, for the confirmation page. Reading it never applies
+  the change; use `abTestConfirmPublishLink`. Only the member it was sent to can read it. Requires A/B testing edit
+  access.
+  """
+  abTestPublishConfirmation("Token from the emailed confirmation link." token: String!): AbTestPublishConfirmation!
+
+  """
   Returns one accessible site export and its current generation and notification status. Use `aiExports` for
   recent requests or read this operation again after creation; the download URL is null until completion and after
   expiry. Requires a logged-in session, JSON export access or the export-everything override, site access,
@@ -3938,6 +3945,33 @@ type RootMutationType {
   tracking ids, and returns only the new test id. Requires A/B testing create access.
   """
   abTestDuplicate("Test id from `abTestList`, `abTestRefList`, or `abTestCreate`." id: Int!): AbTestMutationResult!
+
+  """
+  Applies a held-back publish or running-variant change with the emailed six-digit code (spaces allowed). Three
+  wrong codes lock the confirmation. Requires A/B testing edit access.
+  """
+  abTestConfirmPublish(
+    "`id` from the `CONFIRMATION_REQUIRED` error or `abTestPublishConfirmation`."
+    confirmationId: String!
+
+    "Six-digit code from the email."
+    code: String!
+  ): AbTest!
+
+  """
+  Applies a held-back publish or running-variant change from the emailed link, after the member confirms on the
+  confirmation page. Requires A/B testing edit access.
+  """
+  abTestConfirmPublishLink("Token from the emailed confirmation link." token: String!): AbTest!
+
+  """
+  Emails a new code and link, replacing the old ones and restarting the 30 minutes; at most once a minute and four
+  sends per confirmation. Requires A/B testing edit access.
+  """
+  abTestResendPublishConfirmation(
+    "`id` from the `CONFIRMATION_REQUIRED` error or `abTestPublishConfirmation`."
+    confirmationId: String!
+  ): AbTestPublishConfirmation!
 
   """
   Creates a pending site-data export request for a UTC-midnight window of at most 90 days. Generation runs
@@ -16510,6 +16544,79 @@ input AiExportInput {
 
   "Completion-notification email, trimmed before validation; at most 254 bytes and must contain a valid address."
   notificationEmail: String!
+}
+
+"""
+A publish or running-variant change that waits for the acting member's emailed code or link because the content
+looked risky. Returned by `abTestPublishConfirmation`; the `CONFIRMATION_REQUIRED` error of `abTestPublish`,
+`abTestUpdateVariants` and `abTestAddVariants` carries `id`, `email`, `expiresAt` and `rules` in its extensions.
+"""
+type AbTestPublishConfirmation {
+  "Confirmation id for `abTestConfirmPublish` and `abTestResendPublishConfirmation`."
+  id: String!
+
+  "The test the held-back change belongs to."
+  abTestId: Int!
+
+  "Current name of that test."
+  abTestName: String!
+
+  "Domain of the test's site."
+  siteName: String
+
+  "What confirming applies."
+  action: AbTestPublishConfirmationAction!
+
+  "Masked address the code and link were sent to, e.g. `jo***@example.com`."
+  email: String!
+
+  "Unix seconds after which the code and link stop working; a resend restarts it."
+  expiresAt: Int!
+
+  "Whether the change can still be confirmed."
+  status: AbTestPublishConfirmationStatus!
+
+  "What the check found, in plain words, one entry per kind of finding."
+  rules: [AbTestPublishConfirmationRule!]!
+}
+
+"One kind of content the check found."
+type AbTestPublishConfirmationRule {
+  "Rule id, e.g. `CUSTOM_SCRIPT`."
+  id: String!
+
+  "Plain-language description shown to the customer."
+  label: String!
+}
+
+"The change a confirmation applies."
+enum AbTestPublishConfirmationAction {
+  "Publish the draft test."
+  PUBLISH
+
+  "Apply the variant edits to the running test."
+  UPDATE_VARIANTS
+
+  "Add the variants to the running test."
+  ADD_VARIANTS
+}
+
+"Whether a confirmation can still be used."
+enum AbTestPublishConfirmationStatus {
+  "Waiting for the code or link."
+  PENDING
+
+  "Already confirmed; the change was applied."
+  CONFIRMED
+
+  "The code and link expired; resend or publish again."
+  EXPIRED
+
+  "Too many wrong codes; publish again to get a new code."
+  LOCKED
+
+  "Replaced by a newer confirmation for the same test."
+  SUPERSEDED
 }
 
 """
