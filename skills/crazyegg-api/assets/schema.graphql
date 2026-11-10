@@ -186,6 +186,13 @@ type RootQueryType {
   abTestPublishConfirmation("Token from the emailed confirmation link." token: String!): AbTestPublishConfirmation!
 
   """
+  The held-back publish behind an emailed confirmation link, for the confirmation page. Reading it never publishes;
+  use `addonConfirmPublishLink`. Only the member it was sent to can read it. Requires survey or CTA edit access
+  matching the add-on type.
+  """
+  addonPublishConfirmation("Token from the emailed confirmation link." token: String!): AddonPublishConfirmation!
+
+  """
   Returns one accessible site export and its current generation and notification status. Use `aiExports` for
   recent requests or read this operation again after creation; the download URL is null until completion and after
   expiry. Requires a logged-in session, JSON export access or the export-everything override, site access,
@@ -3984,6 +3991,33 @@ type RootMutationType {
     "`id` from the `CONFIRMATION_REQUIRED` error or `abTestPublishConfirmation`."
     confirmationId: String!
   ): AbTestPublishConfirmation!
+
+  """
+  Publishes a held-back survey or CTA with the emailed six-digit code (spaces allowed). Three wrong codes lock the
+  confirmation. Requires survey or CTA edit access matching the add-on type.
+  """
+  addonConfirmPublish(
+    "`id` from the `CONFIRMATION_REQUIRED` error or `addonPublishConfirmation`."
+    confirmationId: String!
+
+    "Six-digit code from the email."
+    code: String!
+  ): Addon!
+
+  """
+  Publishes a held-back survey or CTA from the emailed link, after the member confirms on the confirmation page.
+  Requires survey or CTA edit access matching the add-on type.
+  """
+  addonConfirmPublishLink("Token from the emailed confirmation link." token: String!): Addon!
+
+  """
+  Emails a new code and link, replacing the old ones and restarting the 30 minutes; at most once a minute and four
+  sends per confirmation. Requires survey or CTA edit access matching the add-on type.
+  """
+  addonResendPublishConfirmation(
+    "`id` from the `CONFIRMATION_REQUIRED` error or `addonPublishConfirmation`."
+    confirmationId: String!
+  ): AddonPublishConfirmation!
 
   """
   Creates a pending site-data export request for a UTC-midnight window of at most 90 days. Generation runs
@@ -16721,6 +16755,40 @@ input AiExportInput {
 
   "Completion-notification email, trimmed before validation; at most 254 bytes and must contain a valid address."
   notificationEmail: String!
+}
+
+"""
+A survey or CTA publish that waits for the acting member's emailed code or link because the content looked risky.
+Returned by `addonPublishConfirmation`; the `CONFIRMATION_REQUIRED` error of `addonDraftPublish` carries `id`,
+`email`, `expiresAt` and `rules` in its extensions.
+"""
+type AddonPublishConfirmation {
+  "Confirmation id for `addonConfirmPublish` and `addonResendPublishConfirmation`."
+  id: String!
+
+  "The add-on waiting to be published."
+  addonId: String!
+
+  "Whether the add-on is a survey or a CTA."
+  addonType: AddonType!
+
+  "Name the add-on will be published with."
+  addonName: String!
+
+  "Domain of the add-on's site."
+  siteName: String
+
+  "Masked address the code and link were sent to, e.g. `jo***@example.com`."
+  email: String!
+
+  "Unix seconds after which the code and link stop working; a resend restarts it."
+  expiresAt: Int!
+
+  "Whether the publish can still be confirmed."
+  status: AbTestPublishConfirmationStatus!
+
+  "What the check found, in plain words, one entry per kind of finding."
+  rules: [AbTestPublishConfirmationRule!]!
 }
 
 """
