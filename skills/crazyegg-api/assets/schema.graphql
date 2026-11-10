@@ -5,6 +5,12 @@ schema {
 }
 
 type RootQueryType {
+  "Validates a targeting URL and resolves its accessible site without creating one. Requires Personalization edit access."
+  personalizationCampaignCheckPage(
+    "Targeting URL, optionally containing wildcards."
+    url: String!
+  ): PersonalizationCampaignPageCheck!
+
   "Returns an accessible, non-deleted campaign in any state. Requires Personalization view access."
   personalizationCampaignDetail("Saved Personalization campaign ID." id: Int!): PersonalizationCampaign
 
@@ -2632,7 +2638,7 @@ type RootQueryType {
 }
 
 type RootMutationType {
-  "Creates a draft with a valid name and accessible site. Requires Personalization edit access."
+  "Creates a draft with a valid name and accessible site, creating a URL's missing site when permitted. Requires Personalization edit access."
   personalizationCampaignCreateDraft(
     "Initial draft configuration."
     args: PersonalizationCampaignCreateDraftInput!
@@ -7618,6 +7624,21 @@ type GoogleFont {
 
   "Catalog fetch time in Unix seconds; null when not recorded."
   fetchedAt: Int
+}
+
+"Read-only URL and site resolution for campaign creation."
+type PersonalizationCampaignPageCheck {
+  "Normalized targeting URL."
+  url: String
+
+  "Resolved site domain."
+  domain: String
+
+  "Accessible existing site ID, or null for a new site."
+  siteId: Int
+
+  "Validation or site-permission errors; empty when continuing is allowed."
+  errors: [String!]!
 }
 
 """
@@ -14754,17 +14775,89 @@ input SharedUrlUpdateParams {
 
 "Configuration required to create a campaign draft; other campaign sections may be added later."
 input PersonalizationCampaignCreateDraftInput {
+  "Complete set list: omission preserves sets, [] removes them. IDs must belong to this campaign."
+  experienceSets: [PersonalizationExperienceSetInput!]
+
   "Nonblank campaign name, at most 255 characters."
   name: String!
 
-  "Accessible site ID from sites; immutable after saving."
-  siteId: Int!
+  "Whether to automatically create a Heatmap for each Variant; defaults to false."
+  autoCreateHeatmaps: Boolean
+
+  "URL used to resolve the campaign site; a missing site is created atomically with the draft when permitted."
+  targetingUrl: String
+
+  "Accessible site ID; required when targetingUrl is omitted and immutable after saving."
+  siteId: Int
 }
 
 "Configuration to update a saved campaign draft. The campaign's site cannot be changed."
 input PersonalizationCampaignUpdateDraftInput {
+  "Complete set list: omission preserves sets, [] removes them. IDs must belong to this campaign."
+  experienceSets: [PersonalizationExperienceSetInput!]
+
   "Nonblank campaign name, at most 255 characters."
   name: String!
+
+  "Whether to automatically create a Heatmap for each Variant; unchanged when omitted."
+  autoCreateHeatmaps: Boolean
+}
+
+"One PATCH A/B draft in a Personalization campaign. The matching URL cannot change after saving."
+input PersonalizationExperienceSetInput {
+  "Existing A/B draft ID; omit for a new set."
+  id: Int
+
+  "Optional local identifier echoed in detail for reconciliation, at most 255 characters."
+  clientId: String
+
+  "Nonblank Experience Set name, at most 255 characters."
+  name: String!
+
+  "Targeting URL, optionally containing wildcards; shared by all campaign sets and stored on each A/B draft."
+  matchingUrl: String!
+
+  "Concrete editor URL matching matchingUrl. No wildcards; optional until a variant has edits."
+  pageUrl: String
+
+  "Optional conversion goal belonging to this campaign's site."
+  goalId: Int
+
+  "Whether traffic is automatically allocated; defaults to true."
+  autoReweight: Boolean
+
+  "Unique positive matching priority; lower numbers match first."
+  priority: Int!
+
+  "Unique nonnegative position in the setup UI, independent of priority."
+  listOrder: Int!
+
+  "JSON-encoded targeted audience definition. Null leaves the draft audience unconfigured."
+  audienceDefinition: String
+
+  "Complete active variant list, with the unchanged control first; omitted existing variants are retired."
+  variants: [PersonalizationVariantInput!]!
+}
+
+"A control or visual-editor variant in a Personalization draft; split URLs are not supported."
+input PersonalizationVariantInput {
+  "Existing variant ID belonging to this set; omit for a new variant."
+  id: Int
+
+  "Optional local identifier echoed in detail, at most 255 characters."
+  clientId: String
+
+  "CONTROL for the first entry or VARIANT for visual-editor variants. PATCH and split variants are not accepted."
+  type: AbTestVariantType!
+
+  "Zero for control; unique positive display number for variants."
+  position: Int!
+
+  "Traffic percentage from 0 to 100 with at most one decimal place. Manual allocations must total 100%."
+  weight: Float
+
+  "Valid JSON editor patch, or null/empty for an untouched variant. Control must have no changes."
+  editorPatch: String
 }
 
 """
@@ -16350,6 +16443,9 @@ enum SharedUrlStatus {
 
 "A saved Personalization campaign. Its site cannot change after creation."
 type PersonalizationCampaign {
+  "Saved Experience Sets in setup order, including incomplete draft configuration."
+  experienceSets: [PersonalizationExperienceSet!]!
+
   "Saved campaign ID."
   id: Int!
 
@@ -16361,6 +16457,69 @@ type PersonalizationCampaign {
 
   "Display name of the campaign's site."
   siteName: String!
+
+  "Whether to automatically create a Heatmap for each Variant."
+  autoCreateHeatmaps: Boolean!
+}
+
+"An Experience Set stored as an A/B draft."
+type PersonalizationExperienceSet {
+  "Saved A/B test ID."
+  id: Int!
+
+  "Local identifier supplied when saving this set."
+  clientId: String
+
+  "Experience Set name."
+  name: String
+
+  "Targeting URL or wildcard pattern stored on the A/B test."
+  matchingUrl: String
+
+  "Concrete URL used in the editor; may be unset in an unedited wildcard draft."
+  pageUrl: String
+
+  "Conversion goal ID, if configured."
+  goalId: Int
+
+  "Whether traffic allocation is automatic."
+  autoReweight: Boolean!
+
+  "Matching priority, with lower numbers matched first."
+  priority: Int
+
+  "Setup display order, independent of matching priority."
+  listOrder: Int
+
+  "JSON-encoded draft audience definition, or null if not configured."
+  audienceDefinition: String
+
+  "Active variants, including untouched drafts, in display order."
+  variants: [PersonalizationVariant!]!
+}
+
+"A saved Personalization control or visual-editor variant."
+type PersonalizationVariant {
+  "Saved variant ID."
+  id: Int!
+
+  "Local identifier supplied when saving this variant."
+  clientId: String
+
+  "Control or visual-editor variant role."
+  type: AbTestVariantType!
+
+  "Zero for control; display number for other variants."
+  position: Int
+
+  "Supplied traffic percentage, retained even with automatic allocation; null if unconfigured."
+  weight: Float
+
+  "JSON-encoded editor patch, or null for control and untouched variants."
+  editorPatch: String
+
+  "Signed A/B preview URL for this saved variant; null until a concrete editor URL is set."
+  viewVariantUrl: String
 }
 
 """
