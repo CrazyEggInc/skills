@@ -2706,6 +2706,12 @@ type RootMutationType {
     "Whether to receive receipt emails; omitted keeps the saved preference."
     receipt: Boolean
 
+    """
+    Comma-separated addresses (at most 10) that receive receipts; an empty string sends them to the
+    account login again, and omitting it keeps the saved list.
+    """
+    billingEmails: String
+
     "Whether to receive newsletters; omitted keeps the saved preference."
     newsletter: Boolean
 
@@ -13265,15 +13271,27 @@ enum CcType {
 "Email subscription preferences returned by `userNotifications`."
 type UserNotifications {
   endOfTest: Boolean!
+
   dailyUpdate: Boolean!
+
   weeklyUpdate: Boolean!
+
   accountLimits: Boolean!
+
   receipt: Boolean!
+
   newsletter: Boolean!
+
   snapshotRecommendation: Boolean!
+
   weeklyExport: Boolean!
+
   monthlyExport: Boolean!
+
   trialEnded: Boolean!
+
+  "Comma-separated addresses that receive receipts; null sends them to the account login."
+  billingEmails: String
 }
 
 "Saved account billing profile returned by `billingDetails`."
