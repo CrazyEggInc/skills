@@ -5,6 +5,12 @@ schema {
 }
 
 type RootQueryType {
+  "Reads the campaign confirmation behind an emailed link without publishing anything. Only the requesting member can read it. Requires Personalization edit access."
+  personalizationCampaignPublishConfirmation(
+    "Token from the campaign confirmation email."
+    token: String!
+  ): AbTestPublishConfirmation!
+
   "Validates a targeting URL and resolves its accessible site without creating one. Requires Personalization edit access."
   personalizationCampaignCheckPage(
     "Targeting URL, optionally containing wildcards."
@@ -2645,6 +2651,30 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Publishes every Experience Set in an accessible draft campaign together. Every set must be complete. Flagged content requires a single campaign confirmation. Requires Personalization edit access."
+  personalizationCampaignPublish("Saved campaign to publish." id: Int!): PersonalizationCampaign!
+
+  "Confirms the exact campaign setup with its emailed code. Three wrong codes lock the confirmation. Requires Personalization edit access."
+  personalizationCampaignConfirmPublish(
+    "Campaign confirmation ID."
+    confirmationId: String!
+
+    "Emailed six-digit confirmation code; spaces are allowed."
+    code: String!
+  ): PersonalizationCampaign!
+
+  "Confirms publishing the exact campaign setup using its emailed link token. Requires Personalization edit access."
+  personalizationCampaignConfirmPublishLink(
+    "Token from the campaign confirmation email."
+    token: String!
+  ): PersonalizationCampaign!
+
+  "Resends the campaign confirmation, replacing the previous code and link. Requires Personalization edit access."
+  personalizationCampaignResendPublishConfirmation(
+    "Campaign confirmation ID to resend."
+    confirmationId: String!
+  ): AbTestPublishConfirmation!
+
   "Creates a draft with a valid name and accessible site, creating a URL's missing site when permitted. Requires Personalization edit access."
   personalizationCampaignCreateDraft(
     "Initial draft configuration."
@@ -16496,7 +16526,7 @@ type PersonalizationCampaign {
   autoCreateHeatmaps: Boolean!
 }
 
-"An Experience Set stored as an A/B draft."
+"An Experience Set stored as an A/B test."
 type PersonalizationExperienceSet {
   "Saved A/B test ID."
   id: Int!
@@ -16506,6 +16536,9 @@ type PersonalizationExperienceSet {
 
   "Experience Set name."
   name: String
+
+  "Current status of the Experience Set."
+  status: AbTestStatus!
 
   "Targeting URL or wildcard pattern stored on the A/B test."
   matchingUrl: String
@@ -16799,6 +16832,9 @@ looked risky. Returned by `abTestPublishConfirmation`; the `CONFIRMATION_REQUIRE
 type AbTestPublishConfirmation {
   "Confirmation id for `abTestConfirmPublish` and `abTestResendPublishConfirmation`."
   id: String!
+
+  "Campaign ID when this confirmation covers every set in a Personalization campaign; otherwise null."
+  personalizationCampaignId: Int
 
   "The test the held-back change belongs to."
   abTestId: Int!
