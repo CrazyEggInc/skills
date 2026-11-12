@@ -17,6 +17,12 @@ type RootQueryType {
     url: String!
   ): PersonalizationCampaignPageCheck!
 
+  "Returns every accessible, non-deleted campaign, newest first. Requires Personalization view access."
+  personalizationCampaignList(
+    "Site id from `sites`; omit to include all accessible sites."
+    site: Int
+  ): [PersonalizationCampaignListItem!]!
+
   "Returns an accessible, non-deleted campaign in any state. Requires Personalization view access."
   personalizationCampaignDetail("Saved Personalization campaign ID." id: Int!): PersonalizationCampaign
 
@@ -2752,6 +2758,19 @@ type RootMutationType {
   """
   setUserData(
     "Metadata key to store; read existing keys from `me.flags` or `me.userData`."
+    name: String!
+
+    "String value to save; omitted or null stores no value. Event marker keys ignore this value."
+    value: String
+  ): Boolean
+
+  """
+  Stores a metadata key and optional string value for the signed-in person rather than the active account,
+  and returns `true`. Entries are shared across every account the person belongs to; most keys replace the
+  previous value. Read entries through `me.guestUserData`. Requires authentication.
+  """
+  setGuestUserData(
+    "Metadata key to store; read existing keys from `me.guestUserData`."
     name: String!
 
     "String value to save; omitted or null stores no value. Event marker keys ignore this value."
@@ -13351,6 +13370,13 @@ type MeDetails {
   userData: [UserData!]!
 
   """
+  Returns saved metadata keys and their optional string values for the signed-in person, shared across
+  every account they belong to. Use it for per-person state such as dismissed announcements; write entries
+  with `setGuestUserData`.
+  """
+  guestUserData: [UserData!]!
+
+  """
   Returns subscription state keyed by product area such as snapshots, recordings, and AB
   testing.
   """
@@ -16617,6 +16643,42 @@ type PersonalizationVariant {
 
   "Signed A/B preview URL for this saved variant; null until a concrete editor URL is set."
   viewVariantUrl: String
+}
+
+"A non-deleted Personalization campaign as listed on the campaigns dashboard."
+type PersonalizationCampaignListItem {
+  "Saved campaign ID."
+  id: Int!
+
+  "Campaign display name."
+  name: String!
+
+  "The campaign's immutable site ID."
+  siteId: Int!
+
+  "Display name of the campaign's site."
+  siteName: String!
+
+  "Derived from the campaign's non-deleted experience sets."
+  status: PersonalizationCampaignStatus!
+
+  "Creation time in Unix seconds."
+  createdAt: Int!
+
+  "Name of the team member who created the campaign; null when not recorded."
+  createdByName: String
+}
+
+"Lifecycle state of a Personalization campaign, derived from its non-deleted experience sets."
+enum PersonalizationCampaignStatus {
+  "No experience set has been published."
+  DRAFT
+
+  "At least one experience set is running."
+  RUNNING
+
+  "Every published experience set has stopped."
+  STOPPED
 }
 
 """
