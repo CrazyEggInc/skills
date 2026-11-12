@@ -16667,6 +16667,129 @@ type PersonalizationCampaignListItem {
 
   "Name of the team member who created the campaign; null when not recorded."
   createdByName: String
+
+  "Targeting URL or wildcard pattern of the first experience set in setup order."
+  matchingUrl: String
+
+  "Concrete editor URL of the first experience set in setup order, if set."
+  pageUrl: String
+
+  "Earliest experience set publish time in Unix seconds; null for drafts."
+  publishedAt: Int
+
+  "Latest experience set stop time in Unix seconds once the campaign has stopped."
+  stoppedAt: Int
+
+  "Non-deleted experience sets in setup order."
+  experienceSets: [PersonalizationCampaignListExperienceSet!]!
+
+  "Lift results over the campaign's whole run; null until an experience set is published."
+  results: PersonalizationCampaignResults
+}
+
+"""
+Bayesian lift of a campaign's personalized Variants over Control. Each published experience set
+compares its Control with its pooled Variants, and sets are weighted by their share of visitors.
+"""
+type PersonalizationCampaignResults {
+  "Median overall relative lift, in percent; null when no set has 50 visitors in each arm."
+  lift: Float
+
+  "5th percentile of the overall lift, in percent."
+  liftLow: Float
+
+  "95th percentile of the overall lift, in percent."
+  liftHigh: Float
+
+  "Overall result, judged on the 90% range of the lift."
+  status: PersonalizationLiftStatus!
+
+  "Why an Uncertain or Neutral status was given; null otherwise."
+  reason: PersonalizationLiftStatusReason
+
+  "Unique visitors across the campaign's published experience sets."
+  visitors: Int!
+
+  "Published experience sets whose traffic split can measure lift."
+  measuredSets: Int!
+
+  "Published experience sets."
+  totalSets: Int!
+
+  "Running campaigns only: the highest-lift Variant confidently beating its set's Control."
+  bestVariant: PersonalizationBestVariant
+}
+
+"A Variant confidently converting better than its experience set's Control."
+type PersonalizationBestVariant {
+  "Saved A/B test ID of the set."
+  experienceSetId: Int!
+
+  "Experience Set name."
+  experienceSetName: String
+
+  "Saved variant ID."
+  variantId: Int!
+
+  "Display number of the variant."
+  variantPosition: Int
+
+  "Median relative lift over the set's Control, in percent."
+  lift: Float!
+}
+
+"Overall result of a Personalization campaign."
+enum PersonalizationLiftStatus {
+  "Confident the Variants convert better than Control."
+  POSITIVE
+
+  "Confident the Variants convert worse than Control."
+  NEGATIVE
+
+  "Any change is small, or 21 days passed without a clear result."
+  NEUTRAL
+
+  "Not enough evidence to draw a conclusion yet."
+  UNCERTAIN
+
+  "No published set sends traffic to both Control and its Variants."
+  NOT_MEASURABLE
+}
+
+"Why a Personalization campaign got an Uncertain or Neutral status."
+enum PersonalizationLiftStatusReason {
+  "Under 5 days, or under 50 visitors in Control or the Variants."
+  INSUFFICIENT_DATA
+
+  "The 90% range is too wide to call a result."
+  RANGE_TOO_WIDE
+
+  "A confident result has not yet held for two consecutive days."
+  AWAITING_CONFIRMATION
+
+  "The 90% range contains zero and stays within ±5%."
+  CONFIDENT
+
+  "21 days passed without a clear result."
+  MAX_DURATION
+}
+
+"An experience set summarized for the campaigns dashboard."
+type PersonalizationCampaignListExperienceSet {
+  "Saved A/B test ID."
+  id: Int!
+
+  "Experience Set name."
+  name: String
+
+  "Current status of the Experience Set."
+  status: AbTestStatus!
+
+  "Whether traffic allocation is automatic."
+  autoReweight: Boolean!
+
+  "JSON-encoded audience definition: the active audience once published, else the draft one."
+  audienceDefinition: String
 }
 
 "Lifecycle state of a Personalization campaign, derived from its non-deleted experience sets."
