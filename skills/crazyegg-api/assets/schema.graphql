@@ -2651,6 +2651,36 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Ends all running Experience Sets and stops their Heatmaps. Draft sets remain drafts; an ended campaign cannot be restarted. Repeating the operation on an ended campaign is safe. Requires Personalization edit access."
+  personalizationCampaignEnd("Published campaign to end." id: Int!): PersonalizationCampaign!
+
+  "Soft-deletes a campaign and its Experience Sets, stopping their Heatmaps while retaining results and variants. Repeated deletion is safe. Requires Personalization edit access."
+  personalizationCampaignDelete(
+    "Campaign to delete, including an already deleted campaign."
+    id: Int!
+  ): PersonalizationCampaign!
+
+  "Copies a campaign into a new draft on the same site, with active variants, audiences and allocation. Creates new set, variant and results IDs without copying Heatmaps or publication history. Requires Personalization edit access."
+  personalizationCampaignDuplicate("Accessible campaign to copy." id: Int!): PersonalizationCampaign!
+
+  "Renames a campaign without renaming its Experience Sets or variants. Accepts nonblank names up to 255 characters. Requires Personalization edit access."
+  personalizationCampaignRename(
+    "Accessible campaign to rename."
+    id: Int!
+
+    "New campaign name; must contain a non-whitespace character."
+    name: String!
+  ): PersonalizationCampaign!
+
+  "Validates and publishes a complete Experience Set configuration for a running campaign. Live settings remain unchanged when validation or confirmation fails. Requires Personalization edit access."
+  personalizationCampaignPublishChanges(
+    "Running campaign to update."
+    id: Int!
+
+    "Complete proposed Experience Set configuration; every set must be valid."
+    experienceSets: [PersonalizationExperienceSetInput!]!
+  ): PersonalizationCampaign!
+
   "Publishes every Experience Set in an accessible draft campaign together. Every set must be complete. Flagged content requires a single campaign confirmation. Requires Personalization edit access."
   personalizationCampaignPublish("Saved campaign to publish." id: Int!): PersonalizationCampaign!
 
