@@ -23,6 +23,24 @@ type RootQueryType {
     site: Int
   ): [PersonalizationCampaignListItem!]!
 
+  """
+  Returns a campaign's results for a date range: totals, the overall lift, Personalized vs
+  Control series and per-variant results. Requires Personalization view access.
+  """
+  personalizationCampaignResults(
+    "Saved Personalization campaign ID."
+    id: Int!
+
+    "Inclusive start in Unix seconds (UTC); omit to start at the first publication."
+    startDate: Int
+
+    "Inclusive end in Unix seconds (UTC); omit to end today or at the last stop."
+    endDate: Int
+
+    "Bucket size for `buckets` and variant conversion rates; defaults to days."
+    timeUnit: TimeUnit
+  ): PersonalizationCampaignReport
+
   "Returns an accessible, non-deleted campaign in any state. Requires Personalization view access."
   personalizationCampaignDetail("Saved Personalization campaign ID." id: Int!): PersonalizationCampaign
 
@@ -16718,6 +16736,171 @@ type PersonalizationCampaignResults {
 
   "Running campaigns only: the highest-lift Variant confidently beating its set's Control."
   bestVariant: PersonalizationBestVariant
+}
+
+"A Personalization campaign's results for a date range."
+type PersonalizationCampaignReport {
+  "Saved campaign ID."
+  id: Int!
+
+  "Campaign display name."
+  name: String!
+
+  "The campaign's site ID."
+  siteId: Int!
+
+  "Display name of the campaign's site."
+  siteName: String!
+
+  "Derived from the campaign's non-deleted experience sets."
+  status: PersonalizationCampaignStatus!
+
+  "Targeting URL or wildcard pattern of the first experience set in setup order."
+  matchingUrl: String
+
+  "Concrete editor URL of the first experience set in setup order, if set."
+  pageUrl: String
+
+  "Earliest experience set publish time in Unix seconds; null for drafts."
+  publishedAt: Int
+
+  "Name of the member who published the earliest experience set."
+  publishedByName: String
+
+  "Latest experience set stop time in Unix seconds once the campaign has stopped."
+  stoppedAt: Int
+
+  "Campaign notes."
+  notes: String
+
+  "The campaign's conversion Goal."
+  goal: PersonalizationReportGoal
+
+  "Display currency of conversion values, from the site's settings."
+  currency: String!
+
+  "First day reported, in Unix seconds; null when nothing has been published."
+  startDate: Int
+
+  "Last day reported, in Unix seconds; null when nothing has been published."
+  endDate: Int
+
+  "Bucket size of `buckets`."
+  timeUnit: TimeUnit!
+
+  "Overall lift for the reported range; null until an experience set is published."
+  results: PersonalizationCampaignResults
+
+  "Unique visitors, unique conversions and value across published sets."
+  totals: PersonalizationReportCounts!
+
+  "Personalized vs Control counts per time unit across the reported range."
+  buckets: [PersonalizationReportBucket!]!
+
+  "Non-deleted experience sets in setup order."
+  experienceSets: [PersonalizationReportExperienceSet!]!
+}
+
+"The conversion Goal of a Personalization campaign."
+type PersonalizationReportGoal {
+  "Goal ID."
+  id: Int!
+
+  "Goal name."
+  name: String
+
+  "Whether the Goal's triggers set or detect a conversion value."
+  hasValue: Boolean
+}
+
+"Unique visitors, unique conversions and conversion value."
+type PersonalizationReportCounts {
+  "Unique visitors."
+  visitors: Int!
+
+  "Unique conversions on the Goal."
+  conversions: Int!
+
+  "Conversion value in the display currency."
+  conversionValue: Float!
+}
+
+"Personalized vs Control counts for one time unit."
+type PersonalizationReportBucket {
+  "First day of the bucket in Unix seconds."
+  startDate: Int!
+
+  "Last day of the bucket in Unix seconds."
+  endDate: Int!
+
+  "All non-control variants combined."
+  personalized: PersonalizationReportCounts!
+
+  "Controls combined."
+  control: PersonalizationReportCounts!
+}
+
+"An experience set's results for the reported range."
+type PersonalizationReportExperienceSet {
+  "Saved A/B test ID."
+  id: Int!
+
+  "Experience Set name."
+  name: String
+
+  "Current status of the Experience Set."
+  status: AbTestStatus!
+
+  "Whether traffic allocation is automatic."
+  autoReweight: Boolean!
+
+  "Concrete URL the variants are shown on."
+  pageUrl: String
+
+  "JSON-encoded audience definition: the active audience once published, else the draft one."
+  audienceDefinition: String
+
+  "Active variants in display order, Control first."
+  variants: [PersonalizationReportVariant!]!
+}
+
+"A variant's results, matching the A/B test results page."
+type PersonalizationReportVariant {
+  "Saved variant ID."
+  id: Int!
+
+  "Control or visual-editor variant."
+  type: AbTestVariantType!
+
+  "Zero for control; display number for other variants."
+  position: Int
+
+  "Signed preview URL; null until a concrete editor URL is set."
+  viewVariantUrl: String
+
+  "Traffic percentage sent to this variant."
+  trafficSplit: Float
+
+  "Unique visitors in the range."
+  visitors: Int!
+
+  "Unique conversions in the range."
+  conversions: Int!
+
+  "Conversion rate in percent."
+  conversionRate: Float
+
+  "Conversion value in the display currency."
+  conversionValue: Float!
+
+  "Relative conversion-rate change over Control in percent; null for Control."
+  improvementFromControl: Float
+
+  "Statistical significance in percent of the difference from Control."
+  significance: Float
+
+  "Conversion rate in percent for each of the report's buckets."
+  conversionRates: [Float!]!
 }
 
 "A Variant confidently converting better than its experience set's Control."
