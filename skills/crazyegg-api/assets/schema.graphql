@@ -4356,6 +4356,16 @@ type RootMutationType {
   createStripeCustomerSession: StripeCustomerSessionResult
 
   """
+  Creates a Stripe billing portal session for the account holder and returns its URL; opening it lets the
+  customer update the payment method, change or cancel the subscription. `type` opens a specific flow:
+  `payment_method_update`, `subscription_update` or `subscription_cancel` (a subscription already set to
+  cancel opens the plain portal); any other value or none opens the plain portal. The portal returns to
+  `/account/plan`. Fails when the account has no Stripe subscription. Requires billing edit access and a
+  browser or Semrush session; API tokens and service tokens are refused.
+  """
+  createStripePortalSession("Portal flow to open; omit for the plain portal." type: String): StripePortalSessionResult
+
+  """
   Creates a hosted Stripe checkout session and returns its URL; completing checkout purchases the plan.
   Contacts Stripe and can create or link the billing customer, but fails when Stripe already holds a live or
   unpaid subscription for it. Use `updateSubscriptionItems` to change an existing subscription or
@@ -15630,6 +15640,12 @@ type SetDefaultPaymentMethodResult {
 type StripeCustomerSessionResult {
   "The client secret for the customer session. Null if user has no Stripe customer."
   clientSecret: String
+}
+
+"Billing portal URL returned by `createStripePortalSession`."
+type StripePortalSessionResult {
+  "Hosted Stripe billing portal URL for the account holder."
+  url: String
 }
 
 "Hosted checkout URL returned by `createCustomCheckoutSession`."
