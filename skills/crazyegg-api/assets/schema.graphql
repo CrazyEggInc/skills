@@ -25,7 +25,8 @@ type RootQueryType {
 
   """
   Returns a campaign's results for a date range: totals, the overall lift, Personalized vs
-  Control series and per-variant results. Requires Personalization view access.
+  Control series and per-variant results. Requires Personalization view access. A shared session can read only
+  the campaign identified by its share link.
   """
   personalizationCampaignResults(
     "Saved Personalization campaign ID."
@@ -2278,7 +2279,8 @@ type RootQueryType {
 
   """
   Returns one page of the account's share links with page metadata, filtered by `status` (enabled by default) and
-  `searchTerm` and sorted by `order`. Links to deleted Heatmaps, A/B tests, goals, funnels, and sites are hidden. Use
+  `searchTerm` and sorted by `order`. Links to deleted Heatmaps, A/B tests, Personalization campaigns, goals,
+  funnels, and sites are hidden. Use
   `sharedUrl` to get or create the link for one resource. Requires sharing manage access.
   """
   sharedUrls(
@@ -2675,6 +2677,15 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Changes the conversion Goal for every Experience Set, including stopped sets, in a running campaign. Existing recorded conversions are evaluated against the selected Goal. Requires Personalization edit access."
+  personalizationCampaignChangeConversion(
+    "Running campaign whose conversion should change."
+    id: Int!
+
+    "Accessible Goal on the campaign site with at least one trigger."
+    goalId: Int!
+  ): PersonalizationCampaign!
+
   "Ends all running Experience Sets and stops their Heatmaps. Draft sets remain drafts; an ended campaign cannot be restarted. Repeating the operation on an ended campaign is safe. Requires Personalization edit access."
   personalizationCampaignEnd("Published campaign to end." id: Int!): PersonalizationCampaign!
 
@@ -16539,6 +16550,9 @@ enum SharedUrlType {
   "Numeric id from `recordingsIdsInGroup`, for sharing playback."
   RECORDING
 
+  "Published Personalization campaign id, for sharing campaign results."
+  PERSONALIZATION
+
   "A/B test id from `abTestList`, for sharing test results."
   ABTEST
 
@@ -16740,6 +16754,9 @@ type PersonalizationCampaignResults {
 
 "A Personalization campaign's results for a date range."
 type PersonalizationCampaignReport {
+  "JSON maps of reference IDs to labels, limited to the resources used in this campaign's audiences."
+  audienceReferenceLabels: String!
+
   "Saved campaign ID."
   id: Int!
 
