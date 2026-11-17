@@ -32,6 +32,9 @@ type RootQueryType {
     "Saved Personalization campaign ID."
     id: Int!
 
+    "Optional accessible Goal on the campaign site for reporting only; does not change the campaign's assigned Goal."
+    goalId: Int
+
     "Inclusive start in Unix seconds (UTC); omit to start at the first publication."
     startDate: Int
 
@@ -2677,6 +2680,15 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Updates notes on an accessible campaign in any status. An empty string clears the notes. Requires Personalization edit access."
+  personalizationCampaignUpdateNotes(
+    "Accessible campaign whose notes should change."
+    id: Int!
+
+    "Campaign notes, or an empty string to clear them."
+    notes: String!
+  ): PersonalizationCampaign!
+
   "Changes the conversion Goal for every Experience Set, including stopped sets, in a running campaign. Existing recorded conversions are evaluated against the selected Goal. Requires Personalization edit access."
   personalizationCampaignChangeConversion(
     "Running campaign whose conversion should change."
@@ -16614,6 +16626,9 @@ enum SharedUrlStatus {
 
 "A saved Personalization campaign. Its site cannot change after creation."
 type PersonalizationCampaign {
+  "Campaign notes."
+  notes: String
+
   "Saved Experience Sets in setup order, including incomplete draft configuration."
   experienceSets: [PersonalizationExperienceSet!]!
 
@@ -16773,6 +16788,9 @@ type PersonalizationCampaignResults {
 
 "A Personalization campaign's results for a date range."
 type PersonalizationCampaignReport {
+  "Goal used to calculate this report; may differ from the campaign's assigned Goal."
+  selectedGoal: PersonalizationReportGoal
+
   "JSON maps of reference IDs to labels, limited to the resources used in this campaign's audiences."
   audienceReferenceLabels: String!
 
