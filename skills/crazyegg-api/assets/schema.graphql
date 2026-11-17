@@ -2680,6 +2680,33 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Retires a non-Control variant in a running Experience Set and stops its Heatmaps, preserving its historical results. Repeating retirement is safe. Requires Personalization edit access."
+  personalizationCampaignRetireVariant(
+    "Accessible campaign containing the variant."
+    id: Int!
+
+    "Running Experience Set belonging to the campaign."
+    experienceSetId: Int!
+
+    "Non-Control variant belonging to the Experience Set."
+    variantId: Int!
+  ): PersonalizationCampaign!
+
+  "Updates or clears a variant description in any campaign status, including Control and retired variants. Requires Personalization edit access."
+  personalizationCampaignUpdateVariantDescription(
+    "Accessible campaign containing the variant."
+    id: Int!
+
+    "Experience Set belonging to the campaign."
+    experienceSetId: Int!
+
+    "Variant belonging to the Experience Set."
+    variantId: Int!
+
+    "Variant description, or an empty string to clear it."
+    description: String!
+  ): PersonalizationCampaign!
+
   "Updates notes on an accessible campaign in any status. An empty string clears the notes. Requires Personalization edit access."
   personalizationCampaignUpdateNotes(
     "Accessible campaign whose notes should change."
@@ -2701,10 +2728,28 @@ type RootMutationType {
   "Ends all running Experience Sets and stops their Heatmaps. Draft sets remain drafts; an ended campaign cannot be restarted. Repeating the operation on an ended campaign is safe. Requires Personalization edit access."
   personalizationCampaignEnd("Published campaign to end." id: Int!): PersonalizationCampaign!
 
+  "Ends one running Experience Set and stops its Heatmaps, retaining its results and other sets. Ending the last running set ends the campaign. Repeating the operation on an ended set is safe. Requires Personalization edit access."
+  personalizationCampaignEndExperienceSet(
+    "Accessible campaign containing the Experience Set."
+    id: Int!
+
+    "Running or already ended Experience Set belonging to this campaign."
+    experienceSetId: Int!
+  ): PersonalizationCampaign!
+
   "Soft-deletes a campaign and its Experience Sets, stopping their Heatmaps while retaining results and variants. Repeated deletion is safe. Requires Personalization edit access."
   personalizationCampaignDelete(
     "Campaign to delete, including an already deleted campaign."
     id: Int!
+  ): PersonalizationCampaign!
+
+  "Soft-deletes one Experience Set in any status and stops its Heatmaps, retaining stored history. Removes it from campaign reports without changing other sets. The last non-deleted set cannot be deleted; delete the campaign instead. Repeated deletion is safe. Requires Personalization edit access."
+  personalizationCampaignDeleteExperienceSet(
+    "Accessible campaign containing the Experience Set."
+    id: Int!
+
+    "Experience Set belonging to this campaign, including an already deleted set."
+    experienceSetId: Int!
   ): PersonalizationCampaign!
 
   "Copies a campaign into a new draft on the same site, with active variants, audiences and allocation. Creates new set, variant and results IDs without copying Heatmaps or publication history. Requires Personalization edit access."
@@ -2716,6 +2761,18 @@ type RootMutationType {
     id: Int!
 
     "New campaign name; must contain a non-whitespace character."
+    name: String!
+  ): PersonalizationCampaign!
+
+  "Renames one Experience Set in an accessible campaign, retaining its variants and configuration. Accepts nonblank names up to 255 characters in any campaign status. Requires Personalization edit access."
+  personalizationCampaignRenameExperienceSet(
+    "Accessible campaign containing the Experience Set."
+    id: Int!
+
+    "Active Experience Set belonging to this campaign."
+    experienceSetId: Int!
+
+    "New Experience Set name; must contain a non-whitespace character."
     name: String!
   ): PersonalizationCampaign!
 
@@ -14991,7 +15048,7 @@ input PersonalizationExperienceSetInput {
   "Targeting URL, optionally containing wildcards; shared by all campaign sets and stored on each A/B draft."
   matchingUrl: String!
 
-  "Concrete editor URL matching matchingUrl. No wildcards; optional until a variant has edits."
+  "Shared concrete editor URL matching matchingUrl. No wildcards; optional until any variant has edits."
   pageUrl: String
 
   "Optional conversion goal belonging to this campaign's site."
@@ -16753,21 +16810,39 @@ type PersonalizationCampaignListItem {
   results: PersonalizationCampaignResults
 }
 
+"Bayesian relative lift and confidence of personalized Variants over Control."
+type PersonalizationLiftSummary {
+  "Median relative lift, in percent; null until there are 50 visitors in each arm."
+  lift: Float
+
+  "5th percentile of the lift, in percent."
+  liftLow: Float
+
+  "95th percentile of the lift, in percent."
+  liftHigh: Float
+
+  "Result judged on the 90% range of the lift."
+  status: PersonalizationLiftStatus!
+
+  "Why an Uncertain or Neutral status was given; null otherwise."
+  reason: PersonalizationLiftStatusReason
+}
+
 """
 Bayesian lift of a campaign's personalized Variants over Control. Each published experience set
 compares its Control with its pooled Variants, and sets are weighted by their share of visitors.
 """
 type PersonalizationCampaignResults {
-  "Median overall relative lift, in percent; null when no set has 50 visitors in each arm."
+  "Median relative lift, in percent; null until there are 50 visitors in each arm."
   lift: Float
 
-  "5th percentile of the overall lift, in percent."
+  "5th percentile of the lift, in percent."
   liftLow: Float
 
-  "95th percentile of the overall lift, in percent."
+  "95th percentile of the lift, in percent."
   liftHigh: Float
 
-  "Overall result, judged on the 90% range of the lift."
+  "Result judged on the 90% range of the lift."
   status: PersonalizationLiftStatus!
 
   "Why an Uncertain or Neutral status was given; null otherwise."
@@ -16914,7 +16989,10 @@ type PersonalizationReportExperienceSet {
   "JSON-encoded audience definition: the active audience once published, else the draft one."
   audienceDefinition: String
 
-  "Active variants in display order, Control first."
+  "Pooled Variants versus Control for the report's Goal and date range; null until the set is published."
+  results: PersonalizationLiftSummary
+
+  "Active and retired variants in display order, Control first."
   variants: [PersonalizationReportVariant!]!
 }
 
@@ -16928,6 +17006,24 @@ type PersonalizationReportVariant {
 
   "Zero for control; display number for other variants."
   position: Int
+
+  "Whether this variant has been retired."
+  isRetired: Boolean!
+
+  "Saved description of this variant."
+  description: String
+
+  "Accessible Heatmap for this variant; null when unavailable."
+  snapshotId: Int
+
+  "Saved visual edits for duplication, available only with Personalization edit access."
+  editorPatch: String
+
+  "Signed variant thumbnail URL; null without a concrete editor URL."
+  thumbnailUrl: String
+
+  "Signed full screenshot URL; null without a concrete editor URL."
+  screenshotUrl: String
 
   "Signed preview URL; null until a concrete editor URL is set."
   viewVariantUrl: String
