@@ -12682,6 +12682,9 @@ type AdPerformanceConnectionStatus {
   "Whether a running sync started within the past hour."
   isSyncing: Boolean!
 
+  "Whether the newest finished sync failed, so the connection needs reconnecting."
+  lastSyncFailed: Boolean!
+
   "Last completed entity sync in Unix seconds; null before any completes."
   lastEntitiesSyncedAt: Int
 
