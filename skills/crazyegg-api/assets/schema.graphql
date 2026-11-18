@@ -16859,6 +16859,9 @@ type PersonalizationCampaignResults {
 
   "Running campaigns only: the highest-lift Variant confidently beating its set's Control."
   bestVariant: PersonalizationBestVariant
+
+  "Active Variants in running, measurable Experience Sets, compared with their own Control."
+  variantResults: [PersonalizationVariantLift!]!
 }
 
 "A Personalization campaign's results for a date range."
@@ -17053,7 +17056,37 @@ type PersonalizationReportVariant {
   conversionRates: [Float!]!
 }
 
-"A Variant confidently converting better than its experience set's Control."
+"An active Variant's Bayesian lift and confidence against its Experience Set's Control."
+type PersonalizationVariantLift {
+  "Median relative lift, in percent; null until there are 50 visitors in each arm."
+  lift: Float
+
+  "5th percentile of the lift, in percent."
+  liftLow: Float
+
+  "95th percentile of the lift, in percent."
+  liftHigh: Float
+
+  "Result judged on the 90% range of the lift."
+  status: PersonalizationLiftStatus!
+
+  "Why an Uncertain or Neutral status was given; null otherwise."
+  reason: PersonalizationLiftStatusReason
+
+  "Saved A/B test ID of the set."
+  experienceSetId: Int!
+
+  "Experience Set name."
+  experienceSetName: String
+
+  "Saved variant ID."
+  variantId: Int!
+
+  "Display number of the variant."
+  variantPosition: Int
+}
+
+"The highest-lift active Variant confidently beating its own Control."
 type PersonalizationBestVariant {
   "Saved A/B test ID of the set."
   experienceSetId: Int!
