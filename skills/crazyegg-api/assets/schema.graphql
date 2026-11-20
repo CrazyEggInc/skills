@@ -2845,6 +2845,9 @@ type RootMutationType {
 
     "Whether to receive trial-ended emails; omitted keeps the saved preference."
     trialEnded: Boolean
+
+    "Whether to receive the weekly AI insight email; omitted keeps the saved preference."
+    weeklyAiInsight: Boolean
   ): Boolean
 
   """
@@ -13131,6 +13134,9 @@ type UserNotifications {
   monthlyExport: Boolean!
 
   trialEnded: Boolean!
+
+  "Whether to receive the weekly AI insight email about the account's website."
+  weeklyAiInsight: Boolean!
 
   "Comma-separated addresses that receive receipts; null sends them to the account login."
   billingEmails: String
