@@ -13617,8 +13617,8 @@ type AbTestVariant {
 
   """
   Predicted lift range from past tests of the same kind of change (the A/B test pattern
-  library); null for controls, redirect tests, and accounts without the `ab-test-prediction`
-  feature. An estimate shown before and during a test, never a measured result.
+  library); null for controls and redirect tests. An estimate shown before and during a test,
+  never a measured result.
   """
   prediction(
     """
