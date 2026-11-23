@@ -3944,7 +3944,8 @@ type RootMutationType {
   """
   Publishes a test that was never published, normally a DRAFT: it becomes RUNNING and records the publish time and
   user. It needs at least two variants; PATCH tests re-validate every `editorPatch` and SPLIT tests need `redirectUrl`
-  on each non-control variant. PATCH tests saved with `createSnapshots` also get one snapshot per variant and device.
+  on each non-control variant. `pageUrl` and `matchingUrl` must be on the test's site (`URL_NOT_ON_SITE` otherwise).
+  PATCH tests saved with `createSnapshots` also get one snapshot per variant and device.
   An already published test is returned unchanged, so this cannot restart a stopped test. Requires A/B testing edit
   access.
   """
