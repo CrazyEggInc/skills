@@ -1741,8 +1741,9 @@ type RootQueryType {
 
   """
   Returns categorized audit rows for an accessible run, omitting manual and not-applicable audits and performance
-  metric rows. Audits sort failed, error, warning, informative warning, then passed; detail lists are capped at
-  five items. Use `pageSpeedRunAnalysis` for metrics and recommendations. A missing run returns an error. Requires
+  metric rows. Audits sort failed, error, warning, informative warning, then passed; legacy target lists are capped
+  at five items and typed evidence sections retain bounded nested rows and full counts. Use `pageSpeedRunAnalysis`
+  for metrics and recommendations. A missing run returns an error. Requires
   page speed view access.
   """
   pageSpeedRunAudits(
@@ -7707,13 +7708,13 @@ type PageSpeedAuditCategory {
   audits: [PageSpeedAudit!]!
 }
 
-"Normalized audit outcome returned by `pageSpeedRunAudits`, with details for non-passed outcomes."
+"Normalized audit outcome with bounded saved evidence, including useful passed and informational diagnostics."
 type PageSpeedAudit {
   id: String!
 
   title: String!
 
-  "Markdown audit explanation; null for passed audits or when absent."
+  "Markdown audit explanation; absent for passed audits without useful evidence."
   descriptionMarkdown: String
 
   "Derived outcome using error mode, numeric score, and warnings; not a capture lifecycle state."
@@ -7728,23 +7729,125 @@ type PageSpeedAudit {
   "Display text derived from captured values, savings, warnings, or outcome."
   summaryText: String!
 
-  "Up to five nonempty warnings; empty for passed audits."
+  "Reported time or byte savings, separate from observed timing; null when estimates or audit details are absent."
+  savings: PageSpeedSavings
+
+  "Up to five nonempty captured warnings."
   warnings: [String!]!
 
-  "Up to five affected resources; empty for passed audits."
+  "Up to five affected resources, including useful passed diagnostics."
   resources: [PageSpeedResource!]!
 
-  "Up to five affected elements; empty for passed audits."
+  "Up to five affected elements, including useful passed diagnostics."
   elements: [PageSpeedElement!]!
 
-  """
-  Up to five fallback detail rows, each with up to five scalar cells, only when resource and element details are
-  empty.
-  """
+  "Up to five legacy scalar detail rows, each with up to five cells; typed evidence preserves richer row context."
   findings: [PageSpeedAuditFinding!]!
+
+  "Total affected resource rows before the five-resource limit."
+  resourceCount: Int!
+
+  "Total affected element rows before the five-element limit."
+  elementCount: Int!
+
+  "Bounded typed evidence sections retaining row associations and measurement labels."
+  evidenceSections: [PageSpeedEvidenceSection!]!
+
+  "Number of nonempty evidence sections before the ten-section limit."
+  evidenceSectionCount: Int!
 }
 
-"One fallback detail row returned by `pageSpeedRunAudits` when no resource or element details are available."
+"One saved evidence table, checklist, dependency tree, node, or text section."
+type PageSpeedEvidenceSection {
+  "Captured section title, or a descriptive dependency-tree title; null when unnamed."
+  title: String
+
+  "Section presentation kind: table, checklist, network, node, text, or estimates."
+  kind: String!
+
+  "Number of meaningful rows before display limits, including nested rows within the supported depth."
+  totalRowCount: Int!
+
+  "Number of primary rows before limits, excluding nested supporting rows."
+  totalRootRowCount: Int!
+
+  "Up to sixty parent-first rows, with up to five siblings and twelve levels of nesting."
+  rows: [PageSpeedEvidenceRow!]!
+}
+
+"A typed evidence row; parent IDs preserve nested reasons, entities, and request dependencies."
+type PageSpeedEvidenceRow {
+  "Stable row identifier within its section."
+  id: String!
+
+  "Parent row identifier in the same section; null for a root row."
+  parentId: String
+
+  "Zero-based nesting depth."
+  depth: Int!
+
+  "Up to ten labeled typed cells from the same provider row."
+  cells: [PageSpeedEvidenceCell!]!
+}
+
+"A saved value with its provider label, unit, and optional element or source locator."
+type PageSpeedEvidenceCell {
+  "Original column key, or checklist entry identifier."
+  key: String!
+
+  "Provider column or checklist label; null when unlabeled."
+  label: String
+
+  "Plain text value, limited to 4,000 characters; null for structured nodes or locations."
+  value: String
+
+  "Provider value type, or check for a checklist result."
+  valueType: String!
+
+  "Numeric value without formatting; null for nonnumeric cells."
+  numericValue: Float
+
+  "ms or bytes when the provider supplies that unit; otherwise null."
+  unit: String
+
+  "observed or estimated_savings for measurements, based on the provider column meaning; otherwise null."
+  measurementKind: String
+
+  "Checklist result; true for passing, false for failing, null outside a checklist."
+  passed: Boolean
+
+  "Provider resource or link URL; null when unavailable."
+  url: String
+
+  "Element belonging to this row, not an independently indexed resource."
+  element: PageSpeedElement
+
+  "Reported generated source location and optional source-map original, not an inferred repository path."
+  source: PageSpeedSourceLocation
+}
+
+"Reported source coordinates converted once to one-based values; invalid sentinel coordinates remain null."
+type PageSpeedSourceLocation {
+  "Captured generated resource URL or provider source label."
+  url: String
+
+  "One-based generated source line; null when unavailable."
+  line: Int
+
+  "One-based generated source column; null when unavailable."
+  column: Int
+
+  "Original source-map file label; null when not reported."
+  originalFile: String
+
+  "One-based original source line; null when unavailable."
+  originalLine: Int
+
+  "One-based original source column; null when unavailable."
+  originalColumn: Int
+}
+
+"One legacy scalar detail row returned by `pageSpeedRunAudits`; richer context is available in evidence sections."
 type PageSpeedAuditFinding {
   cells: [PageSpeedAuditFindingCell!]!
 }
@@ -7859,7 +7962,7 @@ type PageSpeedRecommendation {
   "Estimated time or byte savings; null when neither numeric estimate is supplied."
   savings: PageSpeedSavings
 
-  "Top-level detail item count before resource and element extraction."
+  "Affected resource or element row count, or primary evidence row count when no targets are supplied."
   affectedItemCount: Int!
 
   "Performance metric IDs linked to this audit in the captured report."
@@ -7868,6 +7971,18 @@ type PageSpeedRecommendation {
   resources: [PageSpeedResource!]!
 
   elements: [PageSpeedElement!]!
+
+  "Total affected resource rows in the normalized evidence."
+  resourceCount: Int!
+
+  "Total affected element rows in the normalized evidence."
+  elementCount: Int!
+
+  "Bounded typed evidence shared with audit detail rendering and AI inputs."
+  evidenceSections: [PageSpeedEvidenceSection!]!
+
+  "Number of nonempty evidence sections before the ten-section limit."
+  evidenceSectionCount: Int!
 }
 
 "Estimated time and transfer savings for a Page Speed recommendation."
@@ -7889,8 +8004,38 @@ type PageSpeedResource {
   "Estimated avoidable bytes; null when not supplied."
   wastedBytes: Float
 
+  "Reported percentage unused during the captured load, from 0 to 100; null when unavailable or invalid."
+  wastedPercent: Float
+
+  "Up to five reported JavaScript source entries within this bundle, not additional savings; empty when unavailable."
+  sourceBreakdown: [PageSpeedResourceSource!]!
+
   "Estimated avoidable duration in milliseconds; null when not supplied."
   wastedMilliseconds: Float
+
+  "Observed request duration in milliseconds when the provider column reports Duration rather than savings."
+  durationMilliseconds: Float
+
+  "Observed main-document response wait in milliseconds, not estimated savings or pure backend time; null when unavailable."
+  responseTimeMilliseconds: Float
+
+  """
+  Reported effective browser cache lifetime in milliseconds; zero means no freshness lifetime, null means
+  unavailable. This is not the raw Cache-Control header.
+  """
+  cacheLifetimeMilliseconds: Float
+}
+
+"Reported source-file contribution within a JavaScript bundle, not a verified repository location."
+type PageSpeedResourceSource {
+  "Lighthouse's source label, which may be abbreviated or '(unmapped)'; no line or column is supplied."
+  source: String!
+
+  "Estimated bytes attributed to this source within its parent bundle; null when unavailable."
+  totalBytes: Float
+
+  "Estimated unused bytes attributed to this source, already included in the bundle total; null when unavailable."
+  wastedBytes: Float
 }
 
 "Affected page element from a Page Speed audit or recommendation."
@@ -7970,10 +8115,10 @@ enum PageSpeedImpact {
 
 "Normalized audit outcome in `pageSpeedRunAudits`; distinct from a run's capture lifecycle."
 enum PageSpeedAuditStatus {
-  "Numeric score at least 0.9 with no error or warnings"
+  "Non-informational numeric score at least 0.9 with no error or warnings"
   PASSED
 
-  "Non-error result with warnings or without a passing or failing score"
+  "Informational result, or non-error result with warnings or without a passing or failing score"
   WARNING
 
   "Numeric score below 0.5 without a measurement error"
