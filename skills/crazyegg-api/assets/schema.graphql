@@ -6222,6 +6222,12 @@ type SiteForRecordings {
   "Retained matching recordings; null when only recording presence is checked."
   recordingsCount: Int
 
+  """
+  Whether the site has at least one retained matching recording. Cheaper than
+  `recordingsCount`, which counts every recording, and set for every plan.
+  """
+  hasRecordings: Boolean!
+
   recordingsEnabled: Boolean!
 
   "Derived installation flag based on installation status and recording presence."
