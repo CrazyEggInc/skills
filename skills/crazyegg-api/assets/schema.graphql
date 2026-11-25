@@ -10000,8 +10000,6 @@ type Capabilities {
   commenting: CapabilityWithPermission!
   crazyEggEmailSettings: CapabilityWithPermission!
   ctas: CapabilityWithPermission!
-  editor: CapabilityWithPermission!
-    @deprecated(reason: "The standalone Page Editor was retired; its navigation is always hidden.")
   errors: CapabilityWithPermission!
   export: CapabilityWithPermission!
   funnels: CapabilityWithPermission!
