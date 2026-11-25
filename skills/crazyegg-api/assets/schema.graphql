@@ -14720,22 +14720,13 @@ input SiteFontInput {
   source: String!
 
   """
-  For external fonts: stylesheet, javascript, or font; inferred from the URL extension if absent or
-  unrecognized.
+  For external fonts: stylesheet or font; inferred from the URL extension (.css, .woff, .woff2, .ttf, .otf)
+  if absent or unrecognized.
   """
   resourceType: String
 
-  """
-  HTTPS resource URL for external fonts; font files need a path, and scripts must use a supported provider
-  or the site's domain.
-  """
+  "HTTPS stylesheet or font file URL for external fonts; font files need a path."
   url: String
-
-  """
-  Optional JavaScript function path for external scripts, such as WebFont.load; a trailing () is stripped.
-  Typekit uses Typekit.load.
-  """
-  onLoadCallback: String
 }
 
 "Share-link state and note for `updateSharedUrl` and `updateSharedUrlList`."
