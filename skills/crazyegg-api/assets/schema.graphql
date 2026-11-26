@@ -3758,9 +3758,10 @@ type RootMutationType {
   ): [AccountTeamMember!]!
 
   """
-  Queues the invitation email again for a pending invitation and returns its ID. A successful resend
-  restarts the 30-day acceptance window; use `createAccountUsers` to add a new member. Requires team settings
-  edit access.
+  Generates a new invitation token, queues a fresh invitation email for a pending invitation, and
+  returns its ID. A successful resend invalidates the previous link and restarts the 30-day
+  acceptance window; use `createAccountUsers` to add a new member. Requires team settings edit
+  access.
   """
   resendInvitationEmail("Pending invitation ID from `accountUsers`, with the `i_` prefix." id: String!): String!
 
@@ -5217,8 +5218,14 @@ type AccountTeamMember {
 
   role: AccountUsersRole!
 
-  "Invitation acceptance URL; invitations expire 30 days after creation or a successful resend."
+  """
+  Deprecated; always null. Invitation links are delivered only by email and expire 30 days after
+  creation or a successful resend.
+  """
   invitationUrl: String
+    @deprecated(
+      reason: "Invitation tokens are stored hashed and links are delivered only by email; use resendInvitationEmail to send a new link."
+    )
 
   invitationPending: Boolean!
 
